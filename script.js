@@ -227,7 +227,10 @@ function openNameModal(typeKey) {
   const input = document.getElementById("name-input");
   input.value = "";
   document.getElementById("name-modal").classList.remove("hidden");
-  setTimeout(() => input.focus(), 50);
+  setTimeout(() => {
+    input.focus();
+    adjustNameModalForKeyboard();
+  }, 60);
 }
 
 async function confirmName() {
@@ -253,17 +256,49 @@ async function confirmName() {
   }
 
   pendingPetName = name;
-  document.getElementById("name-modal").classList.add("hidden");
+  closeNameModal();
   document.getElementById("gl-modal").classList.remove("hidden");
 }
 
 document.getElementById("name-confirm").addEventListener("click", confirmName);
-document.getElementById("name-cancel").addEventListener("click", () => {
-  document.getElementById("name-modal").classList.add("hidden");
-});
+document.getElementById("name-cancel").addEventListener("click", closeNameModal);
 document.getElementById("name-input").addEventListener("keydown", e => {
   if (e.key === "Enter") confirmName();
 });
+
+// Keep the name popup inside the area NOT covered by the on-screen keyboard.
+// When the keyboard opens, the visual viewport shrinks — we resize the modal to
+// that visible region and top-align it so the input + buttons stay reachable.
+function adjustNameModalForKeyboard() {
+  const modal = document.getElementById("name-modal");
+  if (modal.classList.contains("hidden") || !window.visualViewport) return;
+  const vv = window.visualViewport;
+  modal.style.height = vv.height + "px";
+  modal.style.top = vv.offsetTop + "px";
+  modal.style.bottom = "auto";
+  const keyboardOpen = vv.height < window.innerHeight * 0.85;
+  modal.style.alignItems = keyboardOpen ? "flex-start" : "center";
+  modal.style.overflowY = "auto";
+}
+
+function resetNameModalViewport() {
+  const modal = document.getElementById("name-modal");
+  modal.style.height = "";
+  modal.style.top = "";
+  modal.style.bottom = "";
+  modal.style.alignItems = "";
+  modal.style.overflowY = "";
+}
+
+function closeNameModal() {
+  document.getElementById("name-modal").classList.add("hidden");
+  resetNameModalViewport();
+}
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", adjustNameModalForKeyboard);
+  window.visualViewport.addEventListener("scroll", adjustNameModalForKeyboard);
+}
 
 // ---------- Great Lakes question ----------
 async function finishOnboarding(isGL) {
