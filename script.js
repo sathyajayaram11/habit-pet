@@ -20,24 +20,27 @@ const DEFAULT_HABITS = [
 const XP_PER_HABIT = 20;
 const STRENGTH_PER_HABIT = 5;
 
-// Playful animal "sounds" via the browser's speech engine (no audio files needed).
-const PET_SOUNDS = {
-  dog:      { text: "Woof! Woof!",   rate: 1.1, pitch: 1.0 },
-  cat:      { text: "Meow",          rate: 1.0, pitch: 1.8 },
-  cow:      { text: "Mooo",          rate: 0.5, pitch: 0.4 },
-  parrot:   { text: "Squawk! Hello!",rate: 1.3, pitch: 1.7 },
-  rabbit:   { text: "Squeak squeak", rate: 1.4, pitch: 1.9 },
-  elephant: { text: "Pa-roooo!",     rate: 0.6, pitch: 0.4 },
+// Real recorded animal sounds, preloaded so playback is instant.
+// (Only pets with a clip make a sound; others are silently skipped.)
+const SOUND_FILES = {
+  cat: "sounds/cat.m4a",
+  cow: "sounds/cow.m4a",
 };
 
+const audioCache = {};
+for (const [key, src] of Object.entries(SOUND_FILES)) {
+  const a = new Audio(src);
+  a.preload = "auto";
+  audioCache[key] = a;
+}
+
 function playSound(typeKey) {
-  const s = PET_SOUNDS[typeKey];
-  if (!s || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(s.text);
-  u.rate = s.rate;
-  u.pitch = s.pitch;
-  window.speechSynthesis.speak(u);
+  const a = audioCache[typeKey];
+  if (!a) return;
+  try {
+    a.currentTime = 0;
+    a.play().catch(() => {}); // ignore autoplay restrictions
+  } catch (e) { /* no-op */ }
 }
 
 // Why each habit matters — shown via the info icon next to each habit.
