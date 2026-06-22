@@ -106,6 +106,25 @@ body.night .xp-text, body.night .habits-header span, body.night .strength-label 
 .pet-card .name { font-weight: 600; font-size: 15px; }
 
 /* ---------- Game Screen ---------- */
+.game-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+.game-brand-mark { width: 26px; height: 26px; border-radius: 7px; }
+.game-brand-word {
+  font-family: "Baloo Thambi 2", system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #FFC93C, #FF8C42);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.lb-kolam { width: 20px; height: 20px; border-radius: 5px; vertical-align: -3px; }
+
 .topbar {
   display: flex;
   justify-content: space-between;
