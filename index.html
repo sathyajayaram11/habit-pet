@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Habit Pet</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- SCREEN 1: Pet Selection -->
+  <section id="select-screen" class="screen">
+    <h1>Choose Your Pet</h1>
+    <p class="subtitle">Your habits make them stronger.</p>
+    <div id="pet-options" class="pet-grid"></div>
+  </section>
+
+  <!-- SCREEN 2: Main Game -->
+  <section id="game-screen" class="screen hidden">
+    <div id="time-badge" class="time-badge"></div>
+
+    <header class="topbar">
+      <div class="pet-name" id="pet-name"></div>
+      <div class="level-badge">Lv <span id="pet-level">1</span></div>
+    </header>
+
+    <div class="pet-stage">
+      <div id="pet-emoji" class="pet-emoji">🥚</div>
+      <div id="pet-mood" class="pet-mood"></div>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar"><div id="xp-fill" class="xp-fill"></div></div>
+        <div class="xp-text"><span id="xp-current">0</span>/<span id="xp-needed">100</span> XP</div>
+      </div>
+    </div>
+
+    <div class="strength-panel">
+      <div class="strength-icon">💪</div>
+      <div class="strength-info">
+        <div class="strength-label">Strength</div>
+        <div class="strength-value" id="strength-value">0</div>
+      </div>
+    </div>
+
+    <div class="habits-card">
+      <div class="habits-header">
+        <h2>Today's Habits</h2>
+        <span id="today-date"></span>
+      </div>
+      <ul id="habit-list" class="habit-list"></ul>
+      <button id="manage-habits-btn" class="link-btn">+ Manage habits</button>
+    </div>
+
+    <div class="heatmap-card">
+      <h2>Last 30 Days</h2>
+      <div id="heatmap" class="heatmap"></div>
+    </div>
+
+    <button id="reset-btn" class="reset-btn">Reset Pet</button>
+  </section>
+
+  <!-- MODAL: Manage Habits -->
+  <div id="manage-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Manage Habits</h2>
+      <ul id="manage-list" class="manage-list"></ul>
+      <div class="add-habit-row">
+        <input id="new-habit-input" type="text" placeholder="Add a habit (e.g. Stretch 10 min)">
+        <button id="add-habit-btn">Add</button>
+      </div>
+      <button id="close-modal-btn" class="primary-btn">Done</button>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden"></div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
