@@ -23,8 +23,10 @@ const STRENGTH_PER_HABIT = 5;
 // Real recorded animal sounds, preloaded so playback is instant.
 // (Only pets with a clip make a sound; others are silently skipped.)
 const SOUND_FILES = {
+  dog: "sounds/dog.ogg",
   cat: "sounds/cat.m4a",
   cow: "sounds/cow.m4a",
+  parrot: "sounds/parrot.m4a",
 };
 
 const audioCache = {};
