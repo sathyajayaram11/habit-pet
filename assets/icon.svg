@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFC93C"/>
+      <stop offset="100%" stop-color="#FF8C42"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded-square background -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- paw: four toe beans + main pad, in soft white -->
+  <g fill="#ffffff">
+    <ellipse cx="158" cy="244" rx="31" ry="40"/>
+    <ellipse cx="214" cy="198" rx="34" ry="45"/>
+    <ellipse cx="298" cy="198" rx="34" ry="45"/>
+    <ellipse cx="354" cy="244" rx="31" ry="40"/>
+    <ellipse cx="256" cy="338" rx="96" ry="82"/>
+  </g>
+
+  <!-- tiny heart in the pad: the "companion" (thunai) touch -->
+  <path d="M256 360
+           c -10 -14 -34 -12 -34 8
+           c 0 16 22 28 34 38
+           c 12 -10 34 -22 34 -38
+           c 0 -20 -24 -22 -34 -8 z"
+        fill="#FF8C42"/>
+</svg>

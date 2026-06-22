@@ -38,7 +38,18 @@ body.night .xp-text, body.night .habits-header span, body.night .strength-label 
 
 /* ---------- Select Screen ---------- */
 #select-screen { text-align: center; padding-top: 40px; }
-#select-screen h1 { font-size: 28px; margin-bottom: 6px; }
+.brand {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, #FFC93C, #FF8C42);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 18px;
+}
+.brand-mark { -webkit-text-fill-color: initial; }
+#select-screen h1 { font-size: 24px; margin-bottom: 6px; }
 .subtitle { color: #777; margin-bottom: 28px; }
 
 .pet-grid {
