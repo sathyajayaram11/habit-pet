@@ -10,14 +10,86 @@ const PET_TYPES = {
 
 const DEFAULT_HABITS = [
   "Slept 7-8 hours",
-  "Ate 3 meals",
-  "Ate 50g+ protein",
+  "Ate 3 meals (50g+ protein)",
   "Drank 3L water",
   "30 min workout / 8,000 steps",
+  "15 min business news",
+  "1 hr deep-focus study (no phone)",
 ];
 
 const XP_PER_HABIT = 20;
 const STRENGTH_PER_HABIT = 5;
+
+// Playful animal "sounds" via the browser's speech engine (no audio files needed).
+const PET_SOUNDS = {
+  dog:      { text: "Woof! Woof!",   rate: 1.1, pitch: 1.0 },
+  cat:      { text: "Meow",          rate: 1.0, pitch: 1.8 },
+  cow:      { text: "Mooo",          rate: 0.5, pitch: 0.4 },
+  parrot:   { text: "Squawk! Hello!",rate: 1.3, pitch: 1.7 },
+  rabbit:   { text: "Squeak squeak", rate: 1.4, pitch: 1.9 },
+  elephant: { text: "Pa-roooo!",     rate: 0.6, pitch: 0.4 },
+};
+
+function playSound(typeKey) {
+  const s = PET_SOUNDS[typeKey];
+  if (!s || !("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(s.text);
+  u.rate = s.rate;
+  u.pitch = s.pitch;
+  window.speechSynthesis.speak(u);
+}
+
+// Why each habit matters — shown via the info icon next to each habit.
+const HABIT_INFO = [
+  {
+    match: "slept",
+    title: "😴 Why 7–8 hours of sleep?",
+    body: "While you sleep, your brain clears waste, locks in memories, and rebalances hunger hormones. Regularly under 7 hours is linked to weaker focus, low mood, and overeating. For most adults, 7–8 hours is the sweet spot.",
+  },
+  {
+    match: "3 meals",
+    title: "🍽️ Why 3 meals with 50g+ protein?",
+    body: "Regular meals keep your blood sugar, energy and focus steady and stop you from getting so hungry you overeat later. Protein (aim for ~50g+ a day, more if you train) repairs muscle and keeps you full. Spread it across your 3 meals — eggs, dal, paneer, curd or chicken — rather than all at once.",
+  },
+  {
+    match: "protein",
+    title: "🍗 Why 50g+ protein?",
+    body: "Protein repairs muscle, keeps you full longer, and protects muscle as you age. A common daily floor is about 0.8g per kg of body weight (~50g for an average adult). If you exercise or lift weights, aim higher — around 1.2–1.6g per kg.",
+  },
+  {
+    match: "news",
+    title: "📰 Why 15 min of business news?",
+    body: "For an MBA, a daily business paper (Mint, Economic Times, Business Standard) builds the commercial awareness that powers case discussions, GDs, and placement interviews. Just 15 focused minutes a day compounds — you start linking classroom frameworks to real companies, deals and markets.",
+  },
+  {
+    match: "study",
+    title: "📚 Why 1 hour of deep-focus study?",
+    body: "One hour of phone-free, focused study beats several hours of distracted scrolling-and-studying. Your brain learns through sustained attention, and doing it daily (instead of cramming) moves knowledge into long-term memory. Treat it as a daily rep — small, consistent, and away from notifications.",
+  },
+  {
+    match: "water",
+    title: "💧 Why 3 litres of water?",
+    body: "Water keeps your temperature, joints, digestion and focus working well. General guidance is about 2.5–3.5 litres of total fluids a day (food included). ~3 litres of drinking water is an easy target — have more in heat or after exercise. A quick check: your urine should be pale yellow.",
+  },
+  {
+    match: "step",
+    title: "🏃 Why 8,000 steps / 30 min?",
+    body: "The famous '10,000 steps' was a 1960s Japanese pedometer ad — not science. Research (Harvard 2019; a 2022 Lancet meta-analysis) shows benefits rise from ~4,000 steps and largely plateau around 7,000–8,000 for most adults, with extra gains up to ~10,000 for younger people. So 8,000 steps — or 30 minutes of brisk activity — is a solid, evidence-based target. More is fine; there's no magic 11,000.",
+  },
+];
+
+function infoForHabit(text) {
+  const t = text.toLowerCase();
+  return HABIT_INFO.find(h => t.includes(h.match));
+}
+
+// First letter capital, rest lowercase (sentence case).
+function sentenceCase(s) {
+  s = s.trim();
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
 
 // ---------- State ----------
 function loadState() {
@@ -108,23 +180,45 @@ function renderPetSelect() {
     const card = document.createElement("div");
     card.className = "pet-card";
     card.innerHTML = `<span class="emoji">${pet.stages[0]}</span><span class="name">${pet.name}</span>`;
-    card.addEventListener("click", () => choosePet(key, pet.name));
+    card.addEventListener("click", () => {
+      playSound(key);
+      openNameModal(key);
+    });
     grid.appendChild(card);
   });
 }
 
-function choosePet(typeKey, defaultName) {
-  const petEmoji = PET_TYPES[typeKey].stages[0];
-  const name = prompt(
-    `${petEmoji} Yay! What will you name your new ${defaultName}?\n\nThis little one grows stronger every day you do — choose a name you'll love cheering for!`,
-    ""
-  );
-  if (name === null) return; // user cancelled — stay on selection screen
-  state.petType = typeKey;
-  state.petName = name.trim() || defaultName;
+let pendingPetType = null;
+
+function openNameModal(typeKey) {
+  pendingPetType = typeKey;
+  const pet = PET_TYPES[typeKey];
+  document.getElementById("name-modal-emoji").textContent = pet.stages[0];
+  document.getElementById("name-modal-title").textContent = `What will you name your new ${pet.name.toLowerCase()}?`;
+  const input = document.getElementById("name-input");
+  input.value = "";
+  document.getElementById("name-modal").classList.remove("hidden");
+  setTimeout(() => input.focus(), 50);
+}
+
+function confirmName() {
+  if (!pendingPetType) return;
+  const raw = document.getElementById("name-input").value;
+  const fallback = PET_TYPES[pendingPetType].name;
+  state.petType = pendingPetType;
+  state.petName = sentenceCase(raw) || fallback;
   saveState();
+  document.getElementById("name-modal").classList.add("hidden");
   showGameScreen();
 }
+
+document.getElementById("name-confirm").addEventListener("click", confirmName);
+document.getElementById("name-cancel").addEventListener("click", () => {
+  document.getElementById("name-modal").classList.add("hidden");
+});
+document.getElementById("name-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") confirmName();
+});
 
 // ---------- Game Screen ----------
 function getPetStageEmoji() {
@@ -140,7 +234,7 @@ function renderGameScreen() {
   document.getElementById("pet-name").textContent = state.petName;
   document.getElementById("pet-level").textContent = state.level;
   document.getElementById("pet-emoji").textContent = getPetStageEmoji();
-  document.getElementById("strength-value").textContent = state.strength;
+  document.getElementById("strength-value").textContent = state.strength > 0 ? state.strength : "–";
 
   const xpNeeded = xpNeededForLevel(state.level);
   document.getElementById("xp-current").textContent = state.xp;
@@ -169,6 +263,19 @@ function renderHabitList() {
       <div class="habit-text">${habit.text}</div>
     `;
     li.addEventListener("click", () => toggleHabit(idx));
+
+    const info = infoForHabit(habit.text);
+    if (info) {
+      const infoBtn = document.createElement("button");
+      infoBtn.className = "habit-info-btn";
+      infoBtn.textContent = "ⓘ";
+      infoBtn.title = "Why this matters";
+      infoBtn.addEventListener("click", e => {
+        e.stopPropagation(); // don't toggle the habit
+        openInfoModal(info);
+      });
+      li.appendChild(infoBtn);
+    }
     list.appendChild(li);
   });
 }
@@ -348,11 +455,76 @@ document.getElementById("new-habit-input").addEventListener("keydown", e => {
 
 // ---------- Reset ----------
 document.getElementById("reset-btn").addEventListener("click", () => {
-  if (confirm("This will reset your pet and all progress. Are you sure?")) {
-    localStorage.removeItem("habitPetState");
-    location.reload();
-  }
+  showConfirm(
+    "Reset your pet?",
+    "This will permanently erase your pet and all your progress. This can't be undone.",
+    () => {
+      localStorage.removeItem("habitPetState");
+      location.reload();
+    }
+  );
 });
+
+// ---------- Evolution Preview ----------
+function renderEvoModal() {
+  const pet = PET_TYPES[state.petType];
+  document.getElementById("evo-title").textContent = `How ${state.petName} grows 🌱`;
+  const container = document.getElementById("evo-stages");
+  container.innerHTML = "";
+  let lastEmoji = null;
+  pet.stages.forEach((emoji, i) => {
+    if (emoji === lastEmoji) return; // skip repeated stages
+    lastEmoji = emoji;
+    if (container.children.length > 0) {
+      const arrow = document.createElement("span");
+      arrow.className = "evo-arrow";
+      arrow.textContent = "→";
+      container.appendChild(arrow);
+    }
+    const unlockLevel = i * 3 + 1;
+    const stage = document.createElement("div");
+    stage.className = "evo-stage";
+    stage.innerHTML = `<span class="evo-emoji">${emoji}</span><span class="evo-level">${unlockLevel === 1 ? "Now" : "Lv " + unlockLevel}</span>`;
+    container.appendChild(stage);
+  });
+}
+
+document.getElementById("evo-btn").addEventListener("click", () => {
+  renderEvoModal();
+  document.getElementById("evo-modal").classList.remove("hidden");
+});
+document.querySelector("[data-close-evo]").addEventListener("click", () => {
+  document.getElementById("evo-modal").classList.add("hidden");
+});
+
+// Tap the pet to hear it!
+document.getElementById("pet-emoji").addEventListener("click", () => {
+  playSound(state.petType);
+  bouncePet();
+});
+
+// ---------- Habit Info ----------
+function openInfoModal(info) {
+  document.getElementById("info-title").textContent = info.title;
+  document.getElementById("info-body").textContent = info.body;
+  document.getElementById("info-modal").classList.remove("hidden");
+}
+document.querySelector("[data-close-info]").addEventListener("click", () => {
+  document.getElementById("info-modal").classList.add("hidden");
+});
+
+// ---------- Reusable Confirm ----------
+function showConfirm(title, body, onConfirm) {
+  document.getElementById("confirm-title").textContent = title;
+  document.getElementById("confirm-body").textContent = body;
+  const modal = document.getElementById("confirm-modal");
+  modal.classList.remove("hidden");
+  const okBtn = document.getElementById("confirm-ok");
+  const cancelBtn = document.getElementById("confirm-cancel");
+  const close = () => modal.classList.add("hidden");
+  okBtn.onclick = () => { close(); onConfirm(); };
+  cancelBtn.onclick = close;
+}
 
 // ---------- Screen Switching ----------
 function showGameScreen() {

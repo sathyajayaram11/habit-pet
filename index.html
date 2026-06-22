@@ -27,8 +27,9 @@
     </header>
 
     <div class="pet-stage">
-      <div id="pet-emoji" class="pet-emoji">🥚</div>
+      <div id="pet-emoji" class="pet-emoji" title="Tap me!">🥚</div>
       <div id="pet-mood" class="pet-mood"></div>
+      <button id="evo-btn" class="evo-cta">✨ See what I'll grow into</button>
       <div class="xp-bar-wrap">
         <div class="xp-bar"><div id="xp-fill" class="xp-fill"></div></div>
         <div class="xp-text"><span id="xp-current">0</span>/<span id="xp-needed">100</span> XP</div>
@@ -70,6 +71,51 @@
         <button id="add-habit-btn">Add</button>
       </div>
       <button id="close-modal-btn" class="primary-btn">Done</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Name your pet -->
+  <div id="name-modal" class="modal hidden">
+    <div class="modal-content name-modal-content">
+      <div id="name-modal-emoji" class="name-modal-emoji">🐶</div>
+      <h2 id="name-modal-title">What will you name your new friend?</h2>
+      <p class="name-modal-sub">This little one grows stronger every day you do. Pick a name you'll love cheering for!</p>
+      <input id="name-input" type="text" placeholder="Type a name…" maxlength="20" autocomplete="off">
+      <div class="modal-actions">
+        <button id="name-cancel" class="ghost-btn">Back</button>
+        <button id="name-confirm" class="primary-btn">Let's go! 🎉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Evolution preview -->
+  <div id="evo-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="evo-title">How your pet grows 🌱</h2>
+      <p class="evo-sub">Stay consistent with your habits to evolve through these stages:</p>
+      <div id="evo-stages" class="evo-stages"></div>
+      <button class="primary-btn" data-close-evo>Got it</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Habit info -->
+  <div id="info-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="info-title"></h2>
+      <p id="info-body" class="info-body"></p>
+      <button class="primary-btn" data-close-info>Got it</button>
+    </div>
+  </div>
+
+  <!-- MODAL: Confirm (reset) -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2 id="confirm-title">Are you sure?</h2>
+      <p id="confirm-body" class="info-body"></p>
+      <div class="modal-actions">
+        <button id="confirm-cancel" class="ghost-btn">Cancel</button>
+        <button id="confirm-ok" class="danger-btn">Reset</button>
+      </div>
     </div>
   </div>
 
