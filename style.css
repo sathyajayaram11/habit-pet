@@ -39,16 +39,34 @@ body.night .xp-text, body.night .habits-header span, body.night .strength-label 
 /* ---------- Select Screen ---------- */
 #select-screen { text-align: center; padding-top: 40px; }
 .brand {
-  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+.brand-mark-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+.brand-word {
+  font-family: "Baloo Thambi 2", system-ui, sans-serif;
+  font-size: 32px;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   background: linear-gradient(90deg, #FFC93C, #FF8C42);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 18px;
 }
-.brand-mark { -webkit-text-fill-color: initial; }
+.brand-tamil {
+  font-family: "Baloo Thambi 2", system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  color: #FF8C42;
+  margin-bottom: 16px;
+}
 .tagline {
   font-size: 18px;
   font-weight: 700;
