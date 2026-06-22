@@ -405,6 +405,7 @@ function renderGameScreen() {
 
   applyTheme();
   renderMood();
+  renderLadder();
   renderHabitList();
   renderHeatmap();
   renderLeaderboard();
@@ -635,6 +636,70 @@ document.getElementById("reset-btn").addEventListener("click", () => {
     }
   );
 });
+
+// ---------- Growth Ladder ----------
+// Returns the pet's distinct evolution milestones with the level each unlocks.
+function petMilestones(typeKey) {
+  const pet = PET_TYPES[typeKey];
+  const out = [];
+  let last = null;
+  pet.stages.forEach((emoji, i) => {
+    if (emoji === last) return; // collapse repeated stages
+    last = emoji;
+    out.push({ emoji, unlockLevel: i * 3 + 1 });
+  });
+  return out;
+}
+
+function renderLadder() {
+  const el = document.getElementById("ladder");
+  const milestones = petMilestones(state.petType);
+
+  // The current milestone is the highest one we've already unlocked.
+  let currentIdx = 0;
+  milestones.forEach((m, i) => { if (state.level >= m.unlockLevel) currentIdx = i; });
+
+  el.innerHTML = "";
+  // Render top-down: final form at the top (the goal), start at the bottom.
+  for (let i = milestones.length - 1; i >= 0; i--) {
+    const m = milestones[i];
+    const reached = state.level >= m.unlockLevel;
+    const isCurrent = i === currentIdx;
+    const isNext = i === currentIdx + 1;
+
+    let cls = "rung";
+    if (isCurrent) cls += " current reached";
+    else if (reached) cls += " reached";
+    else cls += " locked";
+
+    let title, sub;
+    if (isCurrent) {
+      title = "You're here";
+      sub = `Level ${state.level}`;
+    } else if (reached) {
+      title = "Unlocked";
+      sub = `Reached at Lv ${m.unlockLevel}`;
+    } else if (isNext) {
+      const toGo = m.unlockLevel - state.level;
+      title = "Next evolution";
+      sub = `Reach Lv ${m.unlockLevel} — ${toGo} level${toGo === 1 ? "" : "s"} to go`;
+    } else {
+      title = "Locked";
+      sub = `Reach Lv ${m.unlockLevel}`;
+    }
+
+    const rung = document.createElement("div");
+    rung.className = cls;
+    rung.innerHTML = `
+      <div class="rung-badge">${reached ? m.emoji : "🔒"}</div>
+      <div class="rung-info">
+        <div class="rung-title">${title}</div>
+        <div class="rung-sub">${sub}</div>
+      </div>
+    `;
+    el.appendChild(rung);
+  }
+}
 
 // ---------- Evolution Preview ----------
 function renderEvoModal() {

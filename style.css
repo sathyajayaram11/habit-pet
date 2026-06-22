@@ -387,6 +387,67 @@ body.night .evo-cta { color: #ffd166; background: rgba(255,209,102,0.12); }
 }
 .habit-info-btn:hover { color: #43aa8b; }
 
+/* ---------- Growth Ladder ---------- */
+.ladder-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+}
+body.night .ladder-card { background: #2a3052; color: #f0f0f5; }
+.ladder-card h2 { font-size: 16px; margin-bottom: 14px; }
+
+.ladder { position: relative; display: flex; flex-direction: column; }
+.ladder::before {
+  content: "";
+  position: absolute;
+  left: 23px;
+  top: 24px;
+  bottom: 24px;
+  width: 3px;
+  background: #ececec;
+  border-radius: 3px;
+}
+body.night .ladder::before { background: #3a4068; }
+
+.rung {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  position: relative;
+  z-index: 1;
+}
+.rung-badge {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  background: #f1f1f1;
+  border: 2px solid #e2e2e2;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.rung.reached .rung-badge { background: #e1f5ee; border-color: #43aa8b; }
+.rung.current .rung-badge {
+  background: #fff3b0;
+  border-color: #ffb703;
+  box-shadow: 0 0 0 5px rgba(255,183,3,0.25);
+  animation: rungPulse 2s ease-in-out infinite;
+}
+.rung.locked .rung-badge { filter: grayscale(60%); opacity: 0.5; }
+@keyframes rungPulse {
+  0%,100% { box-shadow: 0 0 0 5px rgba(255,183,3,0.22); }
+  50% { box-shadow: 0 0 0 9px rgba(255,183,3,0.10); }
+}
+
+.rung-title { font-size: 14px; font-weight: 600; }
+.rung.current .rung-title { color: #b8860b; }
+body.night .rung.current .rung-title { color: #ffd166; }
+.rung-sub { font-size: 12px; color: #999; }
+body.night .rung-sub { color: #b9bcd6; }
+
 /* ---------- Name error ---------- */
 .name-error {
   color: #e07a5f;
