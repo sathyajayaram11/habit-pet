@@ -58,6 +58,18 @@
       <div id="heatmap" class="heatmap"></div>
     </div>
 
+    <div class="leaderboard-card">
+      <div class="lb-header">
+        <h2>🏆 Leaderboard</h2>
+        <button id="lb-refresh" class="link-btn" title="Refresh">↻ Refresh</button>
+      </div>
+      <div class="lb-tabs">
+        <button class="lb-tab active" data-scope="gl">🎓 Great Lakes</button>
+        <button class="lb-tab" data-scope="all">🌍 Everyone</button>
+      </div>
+      <ol id="lb-list" class="lb-list"></ol>
+    </div>
+
     <button id="reset-btn" class="reset-btn">Reset Pet</button>
   </section>
 
@@ -83,6 +95,7 @@
       <h2 id="name-modal-title">What will you name your new friend?</h2>
       <p class="name-modal-sub">This little one grows stronger every day you do. Pick a name you'll love cheering for!</p>
       <input id="name-input" type="text" placeholder="Type a name…" maxlength="20" autocomplete="off">
+      <div id="name-error" class="name-error"></div>
       <div class="modal-actions">
         <button id="name-cancel" class="ghost-btn">Back</button>
         <button id="name-confirm" class="primary-btn">Let's go! 🎉</button>
@@ -121,11 +134,26 @@
     </div>
   </div>
 
+  <!-- MODAL: Great Lakes question -->
+  <div id="gl-modal" class="modal hidden">
+    <div class="modal-content name-modal-content">
+      <div class="name-modal-emoji">🎓</div>
+      <h2>One last thing!</h2>
+      <p class="name-modal-sub">Are you a Great Lakes student? Say yes to join the Great Lakes leaderboard and compete with your batchmates.</p>
+      <div class="modal-actions">
+        <button id="gl-no" class="ghost-btn">Not yet</button>
+        <button id="gl-yes" class="primary-btn">Yes, I'm GL! 🎓</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST -->
   <div id="toast" class="toast hidden"></div>
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

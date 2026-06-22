@@ -192,27 +192,69 @@ function renderPetSelect() {
 }
 
 let pendingPetType = null;
+let pendingPetName = null;
+
+const BLOCKED_NAMES = /^(name|test|user|player|pet|demo|sample|abc|xyz|temp|asdf|qwerty)\d*$/i;
+
+function validatePetName(raw) {
+  const n = raw.trim();
+  if (n.length < 2) return { ok: false, msg: "Name needs at least 2 letters." };
+  if (n.length > 20) return { ok: false, msg: "Keep it under 20 characters." };
+  const compact = n.replace(/\s+/g, "").toLowerCase();
+  if (/^\d+$/.test(compact)) return { ok: false, msg: "Pick a real name, not just numbers." };
+  if (!/[a-z]/i.test(n)) return { ok: false, msg: "Name needs at least one letter." };
+  if (BLOCKED_NAMES.test(compact)) return { ok: false, msg: "That's too generic — pick a unique name!" };
+  return { ok: true };
+}
+
+// Returns true if the name is already taken (case-insensitive). On network
+// error we return false so a user is never blocked by a connectivity blip.
+async function nameTaken(name) {
+  if (!sb) return false;
+  try {
+    const { data, error } = await sb.from("pets").select("id").ilike("pet_name", name).limit(1);
+    if (error) { console.warn("nameTaken:", error.message); return false; }
+    return data && data.length > 0;
+  } catch (e) { return false; }
+}
 
 function openNameModal(typeKey) {
   pendingPetType = typeKey;
   const pet = PET_TYPES[typeKey];
   document.getElementById("name-modal-emoji").textContent = pet.stages[0];
   document.getElementById("name-modal-title").textContent = `What will you name your new ${pet.name.toLowerCase()}?`;
+  document.getElementById("name-error").textContent = "";
   const input = document.getElementById("name-input");
   input.value = "";
   document.getElementById("name-modal").classList.remove("hidden");
   setTimeout(() => input.focus(), 50);
 }
 
-function confirmName() {
+async function confirmName() {
   if (!pendingPetType) return;
+  const errEl = document.getElementById("name-error");
+  const btn = document.getElementById("name-confirm");
   const raw = document.getElementById("name-input").value;
-  const fallback = PET_TYPES[pendingPetType].name;
-  state.petType = pendingPetType;
-  state.petName = sentenceCase(raw) || fallback;
-  saveState();
+
+  const v = validatePetName(raw);
+  if (!v.ok) { errEl.textContent = v.msg; return; }
+
+  const name = sentenceCase(raw);
+  btn.disabled = true;
+  btn.textContent = "Checking…";
+  errEl.textContent = "";
+  const taken = await nameTaken(name);
+  btn.disabled = false;
+  btn.textContent = "Let's go! 🎉";
+
+  if (taken) {
+    errEl.textContent = "Oops! That name's already taken. Try another.";
+    return;
+  }
+
+  pendingPetName = name;
   document.getElementById("name-modal").classList.add("hidden");
-  showGameScreen();
+  document.getElementById("gl-modal").classList.remove("hidden");
 }
 
 document.getElementById("name-confirm").addEventListener("click", confirmName);
@@ -223,14 +265,127 @@ document.getElementById("name-input").addEventListener("keydown", e => {
   if (e.key === "Enter") confirmName();
 });
 
+// ---------- Great Lakes question ----------
+async function finishOnboarding(isGL) {
+  state.isGreatLakes = isGL;
+  if (pendingPetType) {
+    state.petType = pendingPetType;
+    state.petName = pendingPetName;
+    pendingPetType = null;
+    pendingPetName = null;
+  }
+  saveState();
+  document.getElementById("gl-modal").classList.add("hidden");
+  await ensureCloud();
+  showGameScreen();
+}
+document.getElementById("gl-yes").addEventListener("click", () => finishOnboarding(true));
+document.getElementById("gl-no").addEventListener("click", () => finishOnboarding(false));
+
+// ---------- Cloud sync (Supabase) ----------
+async function ensureCloud() {
+  if (!sb || state.cloudId || !state.petName) return;
+  try {
+    const ins = await sb.from("pets").insert({
+      pet_name: state.petName,
+      pet_type: state.petType,
+      is_great_lakes: !!state.isGreatLakes,
+      strength: state.strength,
+      level: state.level,
+    }).select().single();
+    if (ins.data) { state.cloudId = ins.data.id; saveState(); return; }
+    // If the name already exists (e.g. this user returning after clearing data),
+    // adopt that row as theirs.
+    if (ins.error) {
+      const got = await sb.from("pets").select("id").ilike("pet_name", state.petName).limit(1);
+      if (got.data && got.data[0]) { state.cloudId = got.data[0].id; saveState(); }
+    }
+  } catch (e) { console.warn("ensureCloud:", e); }
+}
+
+async function syncToCloud() {
+  if (!sb || !state.cloudId) return;
+  try {
+    await sb.from("pets").update({
+      strength: state.strength,
+      level: state.level,
+      updated_at: new Date().toISOString(),
+    }).eq("id", state.cloudId);
+  } catch (e) { console.warn("syncToCloud:", e); }
+}
+
+// ---------- Leaderboard ----------
+let lbScope = "gl";
+
+async function renderLeaderboard() {
+  // Keep the tab highlight in sync with the active scope.
+  document.querySelectorAll(".lb-tab").forEach(t =>
+    t.classList.toggle("active", t.dataset.scope === lbScope));
+
+  const listEl = document.getElementById("lb-list");
+  if (!sb) {
+    listEl.innerHTML = `<li class="lb-empty">Leaderboard is offline right now.</li>`;
+    return;
+  }
+  listEl.innerHTML = `<li class="lb-loading">Loading…</li>`;
+  try {
+    let q = sb.from("pets")
+      .select("pet_name,pet_type,strength,level,is_great_lakes")
+      .order("strength", { ascending: false })
+      .order("level", { ascending: false })
+      .limit(25);
+    if (lbScope === "gl") q = q.eq("is_great_lakes", true);
+    const { data, error } = await q;
+    if (error) { listEl.innerHTML = `<li class="lb-empty">Couldn't load leaderboard.</li>`; return; }
+    if (!data || data.length === 0) {
+      listEl.innerHTML = `<li class="lb-empty">No pets here yet — be the first! 🐾</li>`;
+      return;
+    }
+    listEl.innerHTML = "";
+    data.forEach((row, i) => {
+      const li = document.createElement("li");
+      const isMe = row.pet_name === state.petName;
+      li.className = "lb-row" + (isMe ? " me" : "");
+      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
+      const emoji = stageEmojiFor(row.pet_type, row.level);
+      li.innerHTML = `
+        <span class="lb-rank">${medal}</span>
+        <span class="lb-emoji">${emoji}</span>
+        <span class="lb-name">${escapeHtml(row.pet_name)}<span class="lb-lv">Lv ${row.level}</span></span>
+        <span class="lb-strength">${row.strength} 💪</span>
+      `;
+      listEl.appendChild(li);
+    });
+  } catch (e) {
+    listEl.innerHTML = `<li class="lb-empty">Couldn't load leaderboard.</li>`;
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+document.querySelectorAll(".lb-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".lb-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    lbScope = tab.dataset.scope;
+    renderLeaderboard();
+  });
+});
+document.getElementById("lb-refresh").addEventListener("click", renderLeaderboard);
+
 // ---------- Game Screen ----------
-function getPetStageEmoji() {
-  const pet = PET_TYPES[state.petType];
-  const stageIndex = Math.min(
-    Math.floor((state.level - 1) / 3),
-    pet.stages.length - 1
-  );
+function stageEmojiFor(typeKey, level) {
+  const pet = PET_TYPES[typeKey];
+  if (!pet) return "🐾";
+  const stageIndex = Math.min(Math.floor((level - 1) / 3), pet.stages.length - 1);
   return pet.stages[stageIndex];
+}
+
+function getPetStageEmoji() {
+  return stageEmojiFor(state.petType, state.level);
 }
 
 function renderGameScreen() {
@@ -252,6 +407,7 @@ function renderGameScreen() {
   renderMood();
   renderHabitList();
   renderHeatmap();
+  renderLeaderboard();
 }
 
 function renderHabitList() {
@@ -297,6 +453,7 @@ function toggleHabit(idx) {
   }
   saveState();
   renderGameScreen();
+  syncToCloud();
   if (!wasDone) bouncePet();
 }
 
@@ -566,8 +723,16 @@ setInterval(() => {
 
 // ---------- Init ----------
 resetDailyIfNewDay();
+lbScope = state.isGreatLakes ? "gl" : "all";
+
 if (state.petType && PET_TYPES[state.petType]) {
   showGameScreen();
+  if (state.isGreatLakes === undefined) {
+    // Existing local player from before the leaderboard existed — ask once.
+    document.getElementById("gl-modal").classList.remove("hidden");
+  } else {
+    ensureCloud();
+  }
 } else {
   // no pet yet, or pet type no longer exists (e.g. removed in an update)
   state.petType = null;

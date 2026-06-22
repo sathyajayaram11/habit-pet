@@ -376,6 +376,60 @@ body.night .evo-cta { color: #ffd166; background: rgba(255,209,102,0.12); }
 }
 .habit-info-btn:hover { color: #43aa8b; }
 
+/* ---------- Name error ---------- */
+.name-error {
+  color: #e07a5f;
+  font-size: 13px;
+  min-height: 18px;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+/* ---------- Leaderboard ---------- */
+.leaderboard-card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+}
+body.night .leaderboard-card { background: #2a3052; color: #f0f0f5; }
+.lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.lb-header h2 { font-size: 16px; }
+.lb-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.lb-tab {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  background: #f7f7f2;
+  color: #888;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lb-tab.active { background: #43aa8b; color: white; border-color: #43aa8b; }
+body.night .lb-tab { background: #353b5e; border-color: #3a4068; color: #b9bcd6; }
+body.night .lb-tab.active { background: #43aa8b; color: white; }
+
+.lb-list { list-style: none; padding: 0; margin: 0; }
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 6px;
+  border-bottom: 1px solid #f2f2f2;
+}
+body.night .lb-row { border-bottom-color: #3a4068; }
+.lb-row:last-child { border-bottom: none; }
+.lb-row.me { background: rgba(67,170,139,0.1); border-radius: 8px; }
+.lb-rank { width: 26px; font-weight: 700; color: #999; font-size: 14px; text-align: center; }
+.lb-emoji { font-size: 24px; }
+.lb-name { flex: 1; font-size: 14px; font-weight: 600; }
+.lb-name .lb-lv { font-weight: 400; color: #aaa; font-size: 12px; margin-left: 6px; }
+.lb-strength { font-weight: 700; color: #e07a5f; font-size: 14px; }
+.lb-empty, .lb-loading { text-align: center; color: #999; font-size: 13px; padding: 16px 0; }
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed;
