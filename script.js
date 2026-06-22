@@ -408,7 +408,15 @@ function colorForRatio(ratio) {
 }
 
 // ---------- Manage Habits Modal ----------
+const RECOMMENDED_MAX = 6;
+
 function renderManageModal() {
+  const count = state.habits.length;
+  const countEl = document.getElementById("manage-count");
+  countEl.textContent = `${count} habit${count === 1 ? "" : "s"}` +
+    (count > RECOMMENDED_MAX ? " — that's a lot! Consider removing a few." : "");
+  countEl.classList.toggle("over", count > RECOMMENDED_MAX);
+
   const list = document.getElementById("manage-list");
   list.innerHTML = "";
   state.habits.forEach((habit, idx) => {
@@ -446,6 +454,9 @@ document.getElementById("add-habit-btn").addEventListener("click", () => {
     saveState();
     renderManageModal();
     renderGameScreen();
+    if (state.habits.length > RECOMMENDED_MAX) {
+      showToast("Heads up: fewer habits stick better 🎯");
+    }
   }
 });
 

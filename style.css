@@ -253,6 +253,17 @@ body.night .pet-mood { color: #b9bcd6; }
   max-width: 420px;
 }
 .modal-content h2 { margin-bottom: 14px; }
+.manage-hint {
+  font-size: 13px;
+  color: #888;
+  background: #f7f7f2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+.manage-count { font-size: 12px; color: #999; margin-bottom: 10px; }
+.manage-count.over { color: #e07a5f; font-weight: 600; }
 .manage-list { list-style: none; max-height: 240px; overflow-y: auto; margin-bottom: 14px; }
 .manage-item {
   display: flex; justify-content: space-between; align-items: center;
