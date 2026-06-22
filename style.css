@@ -55,7 +55,7 @@ body.night .xp-text, body.night .habits-header span, body.night .strength-label 
   font-size: 32px;
   font-weight: 800;
   letter-spacing: 0.3px;
-  background: linear-gradient(90deg, #FFC93C, #FF8C42);
+  background: linear-gradient(90deg, #6366F1, #4338CA);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -64,7 +64,7 @@ body.night .xp-text, body.night .habits-header span, body.night .strength-label 
   font-family: "Baloo Thambi 2", system-ui, sans-serif;
   font-size: 19px;
   font-weight: 600;
-  color: #FF8C42;
+  color: #4F46E5;
   margin-bottom: 16px;
 }
 .tagline {
@@ -118,7 +118,7 @@ body.night .xp-text, body.night .habits-header span, body.night .strength-label 
   font-family: "Baloo Thambi 2", system-ui, sans-serif;
   font-size: 20px;
   font-weight: 800;
-  background: linear-gradient(90deg, #FFC93C, #FF8C42);
+  background: linear-gradient(90deg, #6366F1, #4338CA);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
