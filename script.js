@@ -810,7 +810,8 @@ function showGameScreen() {
 function showSelectScreen() {
   document.getElementById("game-screen").classList.add("hidden");
   document.getElementById("select-screen").classList.remove("hidden");
-  applyTheme();
+  // Welcome screen always uses the light look (day/night theming is for the game).
+  document.body.classList.remove("morning", "afternoon", "evening", "night");
   renderPetSelect();
 }
 
@@ -819,8 +820,6 @@ setInterval(() => {
   if (!document.getElementById("game-screen").classList.contains("hidden")) {
     resetDailyIfNewDay();
     renderGameScreen();
-  } else {
-    applyTheme();
   }
 }, 60000);
 
