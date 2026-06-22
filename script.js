@@ -27,6 +27,7 @@ const SOUND_FILES = {
   cat: "sounds/cat.m4a",
   cow: "sounds/cow.m4a",
   parrot: "sounds/parrot.m4a",
+  elephant: "sounds/elephant.m4a",
 };
 
 const audioCache = {};

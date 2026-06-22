@@ -12,10 +12,11 @@ Animal sounds are sourced from Wikimedia Commons under the **CC0 1.0 (Public Dom
   https://commons.wikimedia.org/wiki/File:Ara_severus_-_Chestnut-fronted_Macaw_XC519607.mp3
 - **Dog (bark)** — from the CC0-Public-Domain-Sounds collection, CC0
   https://github.com/lavenderdotpet/CC0-Public-Domain-Sounds
+- **Elephant (trumpet)** — "dragon-studio-elephant-trumpeting" from Pixabay
+  (Pixabay Content License — free for commercial use, no attribution required)
 
 Clips were trimmed/encoded for size and browser compatibility.
 
-> Still missing: elephant, rabbit. Add by dropping a short clip into `/sounds`
-> named `elephant.m4a` / `rabbit.m4a` and adding the entry to `SOUND_FILES` in
-> `script.js`. Recommended free source: Pixabay (pixabay.com/sound-effects) —
-> free for commercial use, no attribution required.
+> Still missing: rabbit (rabbits are nearly silent in real life, so no sound is
+> fine). Add by dropping a short clip into `/sounds` named `rabbit.m4a` and adding
+> the entry to `SOUND_FILES` in `script.js`.
