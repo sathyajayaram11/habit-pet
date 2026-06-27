@@ -1,10 +1,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --brand-start: #FFC93C;
-  --brand-end: #FF8C42;
-  --brand-solid: #FF8C42;
-  --brand-soft: #FFF3D6;
+  --brand-start: #A78BFA;
+  --brand-end: #6D28D9;
+  --brand-solid: #7C3AED;
+  --brand-soft: #EDE6FB;
+  --brand-ink: #5B21B6;
   --accent: #E0735F;
   --accent-soft: rgba(224,115,95,0.12);
   --success: #43AA8B;
@@ -210,7 +211,7 @@ body.night .xp-text, body.night .habits-header span, body.night .strength-label 
   border-radius: 50%;
   z-index: -1;
 }
-body.night .pet-emoji::before { background: radial-gradient(circle, rgba(255,209,102,0.18) 0%, rgba(255,209,102,0) 70%); }
+body.night .pet-emoji::before { background: radial-gradient(circle, rgba(167,139,250,0.20) 0%, rgba(167,139,250,0) 70%); }
 .pet-emoji.tired { filter: grayscale(70%); opacity: 0.6; }
 .pet-emoji.bounce { animation: petBounce 0.5s ease; }
 .pet-emoji.happy { animation: petFloat 2.5s ease-in-out infinite; }
@@ -428,8 +429,8 @@ body.night .pet-mood { color: #b9bcd6; }
 .pet-emoji { cursor: pointer; }
 .evo-cta {
   background: var(--brand-soft);
-  color: #8a5a00;
-  border: 1px solid rgba(255,140,66,0.5);
+  color: var(--brand-ink);
+  border: 1px solid rgba(124,58,237,0.4);
   border-radius: 999px;
   padding: 7px 16px;
   font-size: 13px;
@@ -439,7 +440,7 @@ body.night .pet-mood { color: #b9bcd6; }
   transition: transform 0.1s;
 }
 .evo-cta:active { transform: scale(0.96); }
-body.night .evo-cta { color: #ffd166; background: rgba(255,209,102,0.12); }
+body.night .evo-cta { color: #C4B5FD; background: rgba(167,139,250,0.15); }
 
 /* ---------- Modal shared extras ---------- */
 .modal-actions { display: flex; gap: 10px; }
@@ -539,12 +540,12 @@ body.night .evo-cta { color: #ffd166; background: rgba(255,209,102,0.12); }
   padding: 10px 14px;
   margin-bottom: 16px;
   font-size: 13px;
-  color: #8a5a00;
+  color: var(--brand-ink);
 }
 .secure-banner button {
   background: none;
   border: none;
-  color: #8a5a00;
+  color: var(--brand-ink);
   font-weight: 700;
   text-decoration: underline;
   cursor: pointer;
@@ -553,8 +554,8 @@ body.night .evo-cta { color: #ffd166; background: rgba(255,209,102,0.12); }
   margin-left: auto;
   flex-shrink: 0;
 }
-body.night .secure-banner { background: rgba(255,209,102,0.12); color: #ffd166; }
-body.night .secure-banner button { color: #ffd166; }
+body.night .secure-banner { background: rgba(167,139,250,0.15); color: #C4B5FD; }
+body.night .secure-banner button { color: #C4B5FD; }
 
 /* ---------- Growth Ladder ---------- */
 .ladder-card {
@@ -602,18 +603,18 @@ body.night .ladder::before { background: #3a4068; }
 .rung.current .rung-badge {
   background: var(--brand-soft);
   border-color: var(--brand-solid);
-  box-shadow: 0 0 0 5px rgba(255,140,66,0.25);
+  box-shadow: 0 0 0 5px rgba(124,58,237,0.22);
   animation: rungPulse 2s ease-in-out infinite;
 }
 .rung.locked .rung-badge { filter: grayscale(60%); opacity: 0.5; }
 @keyframes rungPulse {
-  0%,100% { box-shadow: 0 0 0 5px rgba(255,140,66,0.22); }
-  50% { box-shadow: 0 0 0 9px rgba(255,140,66,0.10); }
+  0%,100% { box-shadow: 0 0 0 5px rgba(124,58,237,0.20); }
+  50% { box-shadow: 0 0 0 9px rgba(124,58,237,0.08); }
 }
 
 .rung-title { font-size: 14px; font-weight: 600; }
-.rung.current .rung-title { color: #8a5a00; }
-body.night .rung.current .rung-title { color: #ffd166; }
+.rung.current .rung-title { color: var(--brand-ink); }
+body.night .rung.current .rung-title { color: #C4B5FD; }
 .rung-sub { font-size: 12px; color: #999; }
 body.night .rung-sub { color: #b9bcd6; }
 
