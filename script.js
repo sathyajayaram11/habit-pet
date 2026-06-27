@@ -48,6 +48,14 @@ function playSound(typeKey) {
   const a = audioCache[typeKey];
   if (!a) return;
   try {
+    // Stop any other pet sound still playing so clips never overlap —
+    // only the most recently clicked pet should be heard.
+    Object.values(audioCache).forEach(other => {
+      if (other !== a && !other.paused) {
+        other.pause();
+        other.currentTime = 0;
+      }
+    });
     a.currentTime = 0;
     a.play().catch(() => {}); // ignore autoplay restrictions
   } catch (e) { /* no-op */ }
