@@ -9,16 +9,22 @@ const PET_TYPES = {
 };
 
 const DEFAULT_HABITS = [
-  "Slept 7-8 hours",
-  "Ate 3 meals (50g+ protein)",
-  "Drank 3L water",
-  "30 min workout / 8,000 steps",
-  "15 min business news",
-  "1 hr deep-focus study (no phone)",
+  { key: "sleep", text: "Slept 7-8 hours" },
+  { key: "meals", text: "Ate 3 meals (50g+ protein)" },
+  { key: "water", text: "Drank 3L water" },
+  { key: "steps", text: "30 min workout / 8,000 steps" },
+  { key: "news",  text: "15 min business news" },
+  { key: "study", text: "1 hr deep-focus study (no phone)" },
 ];
 
 const XP_PER_HABIT = 20;
 const STRENGTH_PER_HABIT = 5;
+const RECOMMENDED_MAX = 6;
+
+function genId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "h_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
 
 // Real recorded animal sounds, preloaded so playback is instant.
 // (Only pets with a clip make a sound; others are silently skipped.)
@@ -47,47 +53,36 @@ function playSound(typeKey) {
 }
 
 // Why each habit matters — shown via the info icon next to each habit.
-const HABIT_INFO = [
-  {
-    match: "slept",
+// Keyed by the habit's stable `key` (only default habits have one).
+const HABIT_INFO = {
+  sleep: {
     title: "😴 Why 7–8 hours of sleep?",
     body: "While you sleep, your brain clears waste, locks in memories, and rebalances hunger hormones. Regularly under 7 hours is linked to weaker focus, low mood, and overeating. For most adults, 7–8 hours is the sweet spot.",
   },
-  {
-    match: "3 meals",
+  meals: {
     title: "🍽️ Why 3 meals with 50g+ protein?",
     body: "Regular meals keep your blood sugar, energy and focus steady and stop you from getting so hungry you overeat later. Protein (aim for ~50g+ a day, more if you train) repairs muscle and keeps you full. Spread it across your 3 meals — eggs, dal, paneer, curd or chicken — rather than all at once.",
   },
-  {
-    match: "protein",
-    title: "🍗 Why 50g+ protein?",
-    body: "Protein repairs muscle, keeps you full longer, and protects muscle as you age. A common daily floor is about 0.8g per kg of body weight (~50g for an average adult). If you exercise or lift weights, aim higher — around 1.2–1.6g per kg.",
-  },
-  {
-    match: "news",
-    title: "📰 Why 15 min of business news?",
-    body: "For an MBA, a daily business paper (Mint, Economic Times, Business Standard) builds the commercial awareness that powers case discussions, GDs, and placement interviews. Just 15 focused minutes a day compounds — you start linking classroom frameworks to real companies, deals and markets.",
-  },
-  {
-    match: "study",
-    title: "📚 Why 1 hour of deep-focus study?",
-    body: "One hour of phone-free, focused study beats several hours of distracted scrolling-and-studying. Your brain learns through sustained attention, and doing it daily (instead of cramming) moves knowledge into long-term memory. Treat it as a daily rep — small, consistent, and away from notifications.",
-  },
-  {
-    match: "water",
+  water: {
     title: "💧 Why 3 litres of water?",
     body: "Water keeps your temperature, joints, digestion and focus working well. General guidance is about 2.5–3.5 litres of total fluids a day (food included). ~3 litres of drinking water is an easy target — have more in heat or after exercise. A quick check: your urine should be pale yellow.",
   },
-  {
-    match: "step",
+  steps: {
     title: "🏃 Why 8,000 steps / 30 min?",
     body: "The famous '10,000 steps' was a 1960s Japanese pedometer ad — not science. Research (Harvard 2019; a 2022 Lancet meta-analysis) shows benefits rise from ~4,000 steps and largely plateau around 7,000–8,000 for most adults, with extra gains up to ~10,000 for younger people. So 8,000 steps — or 30 minutes of brisk activity — is a solid, evidence-based target. More is fine; there's no magic 11,000.",
   },
-];
+  news: {
+    title: "📰 Why 15 min of business news?",
+    body: "For an MBA, a daily business paper (Mint, Economic Times, Business Standard) builds the commercial awareness that powers case discussions, GDs, and placement interviews. Just 15 focused minutes a day compounds — you start linking classroom frameworks to real companies, deals and markets.",
+  },
+  study: {
+    title: "📚 Why 1 hour of deep-focus study?",
+    body: "One hour of phone-free, focused study beats several hours of distracted scrolling-and-studying. Your brain learns through sustained attention, and doing it daily (instead of cramming) moves knowledge into long-term memory. Treat it as a daily rep — small, consistent, and away from notifications.",
+  },
+};
 
-function infoForHabit(text) {
-  const t = text.toLowerCase();
-  return HABIT_INFO.find(h => t.includes(h.match));
+function infoForHabit(habit) {
+  return habit.key ? HABIT_INFO[habit.key] : null;
 }
 
 // First letter capital, rest lowercase (sentence case).
@@ -95,6 +90,15 @@ function sentenceCase(s) {
   s = s.trim();
   if (!s) return s;
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function strengthDisplay(n) {
+  return n > 0 ? n : "–";
 }
 
 // ---------- State ----------
@@ -107,17 +111,66 @@ function saveState() {
   localStorage.setItem("habitPetState", JSON.stringify(state));
 }
 
-let state = loadState() || {
-  petType: null,
-  petName: null,
-  level: 1,
-  xp: 0,
-  strength: 0,
-  habits: DEFAULT_HABITS.map(text => ({ text })),
-  history: {}, // { "YYYY-MM-DD": { doneCount, totalCount } }
-  todayCompleted: {}, // { habitIndex: true }
-  lastActiveDate: null,
-};
+function freshHabits() {
+  return DEFAULT_HABITS.map(h => ({ id: genId(), key: h.key, text: h.text }));
+}
+
+// Repairs older saved states: gives every habit a stable id (and recovers its
+// `key` by matching default text), and migrates todayCompleted from the old
+// index-based keys to id-based keys. Runs once, silently, on load.
+function migrateState(s) {
+  let changed = false;
+  const defaultKeyByText = {};
+  DEFAULT_HABITS.forEach(h => { defaultKeyByText[h.text] = h.key; });
+
+  const oldHabits = s.habits || [];
+  const needsIds = oldHabits.some(h => !h.id);
+  s.habits = oldHabits.map(h => {
+    if (h.id) return h;
+    changed = true;
+    return { id: genId(), key: h.key || defaultKeyByText[h.text] || null, text: h.text };
+  });
+
+  if (needsIds) {
+    const tc = s.todayCompleted || {};
+    const keys = Object.keys(tc);
+    const looksIndexBased = keys.length > 0 && keys.every(k => /^\d+$/.test(k));
+    if (looksIndexBased) {
+      const migrated = {};
+      keys.forEach(k => {
+        const habit = s.habits[parseInt(k, 10)];
+        if (habit && tc[k]) migrated[habit.id] = true;
+      });
+      s.todayCompleted = migrated;
+      changed = true;
+    }
+  }
+  return { state: s, changed };
+}
+
+const loaded = loadState();
+let state;
+if (loaded) {
+  const { state: migrated, changed } = migrateState(loaded);
+  state = migrated;
+  if (changed) saveState();
+} else {
+  state = {
+    petType: null,
+    petName: null,
+    pin: null,
+    cloudId: null,
+    level: 1,
+    xp: 0,
+    strength: 0,
+    habits: freshHabits(),
+    history: {}, // { "YYYY-MM-DD": { doneCount, totalCount } }
+    todayCompleted: {}, // { habitId: true }
+    lastActiveDate: null,
+    isGreatLakes: undefined,
+    pinPromptDismissed: false,
+  };
+}
 
 // ---------- Helpers ----------
 // Always reckon dates/time in Indian Standard Time (UTC+5:30),
@@ -178,12 +231,75 @@ function resetDailyIfNewDay() {
   }
 }
 
+// ---------- Accessible focusable element helper ----------
+// Lets a non-button element (li, div) behave like a button for keyboard/SR users.
+function makeFocusable(el, onActivate) {
+  el.setAttribute("role", "button");
+  el.setAttribute("tabindex", "0");
+  el.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onActivate();
+    }
+  });
+}
+
+// ---------- Generic modal open/close (handles mobile keyboard + escape) ----------
+function adjustModalsForKeyboard() {
+  if (!window.visualViewport) return;
+  const vv = window.visualViewport;
+  const keyboardOpen = vv.height < window.innerHeight * 0.85;
+  document.querySelectorAll(".modal:not(.hidden)").forEach(modal => {
+    if (!modal.querySelector("input")) return;
+    modal.style.height = vv.height + "px";
+    modal.style.top = vv.offsetTop + "px";
+    modal.style.bottom = "auto";
+    modal.style.alignItems = keyboardOpen ? "flex-start" : "center";
+    modal.style.overflowY = "auto";
+  });
+}
+function resetModalViewport(modal) {
+  modal.style.height = "";
+  modal.style.top = "";
+  modal.style.bottom = "";
+  modal.style.alignItems = "";
+  modal.style.overflowY = "";
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", adjustModalsForKeyboard);
+  window.visualViewport.addEventListener("scroll", adjustModalsForKeyboard);
+}
+
+function openModal(modal) {
+  modal.classList.remove("hidden");
+  setTimeout(() => {
+    const input = modal.querySelector("input");
+    if (input) input.focus();
+    adjustModalsForKeyboard();
+  }, 60);
+}
+function closeModal(modal) {
+  modal.classList.add("hidden");
+  resetModalViewport(modal);
+}
+// Click on backdrop (not the content box) closes the modal.
+document.querySelectorAll(".modal").forEach(modal => {
+  modal.addEventListener("click", e => { if (e.target === modal) closeModal(modal); });
+});
+// Escape closes whatever modal is open.
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    document.querySelectorAll(".modal:not(.hidden)").forEach(closeModal);
+  }
+});
+
 // ---------- Pet Selection Screen ----------
 function renderPetSelect() {
   const grid = document.getElementById("pet-options");
   grid.innerHTML = "";
   Object.entries(PET_TYPES).forEach(([key, pet]) => {
-    const card = document.createElement("div");
+    const card = document.createElement("button");
+    card.type = "button";
     card.className = "pet-card";
     card.innerHTML = `<span class="emoji">${pet.stages[0]}</span><span class="name">${pet.name}</span>`;
     card.addEventListener("click", () => {
@@ -196,6 +312,8 @@ function renderPetSelect() {
 
 let pendingPetType = null;
 let pendingPetName = null;
+let pendingPetPin = null;
+let pinModalMode = "onboarding"; // "onboarding" | "standalone"
 
 const BLOCKED_NAMES = /^(name|test|user|player|pet|demo|sample|abc|xyz|temp|asdf|qwerty)\d*$/i;
 
@@ -227,13 +345,8 @@ function openNameModal(typeKey) {
   document.getElementById("name-modal-emoji").textContent = pet.stages[0];
   document.getElementById("name-modal-title").textContent = `What will you name your new ${pet.name.toLowerCase()}?`;
   document.getElementById("name-error").textContent = "";
-  const input = document.getElementById("name-input");
-  input.value = "";
-  document.getElementById("name-modal").classList.remove("hidden");
-  setTimeout(() => {
-    input.focus();
-    adjustNameModalForKeyboard();
-  }, 60);
+  document.getElementById("name-input").value = "";
+  openModal(document.getElementById("name-modal"));
 }
 
 async function confirmName() {
@@ -259,49 +372,148 @@ async function confirmName() {
   }
 
   pendingPetName = name;
-  closeNameModal();
-  document.getElementById("gl-modal").classList.remove("hidden");
+  closeModal(document.getElementById("name-modal"));
+  pinModalMode = "onboarding";
+  openPinModal();
 }
 
 document.getElementById("name-confirm").addEventListener("click", confirmName);
-document.getElementById("name-cancel").addEventListener("click", closeNameModal);
+document.getElementById("name-cancel").addEventListener("click", () => closeModal(document.getElementById("name-modal")));
 document.getElementById("name-input").addEventListener("keydown", e => {
   if (e.key === "Enter") confirmName();
 });
 
-// Keep the name popup inside the area NOT covered by the on-screen keyboard.
-// When the keyboard opens, the visual viewport shrinks — we resize the modal to
-// that visible region and top-align it so the input + buttons stay reachable.
-function adjustNameModalForKeyboard() {
-  const modal = document.getElementById("name-modal");
-  if (modal.classList.contains("hidden") || !window.visualViewport) return;
-  const vv = window.visualViewport;
-  modal.style.height = vv.height + "px";
-  modal.style.top = vv.offsetTop + "px";
-  modal.style.bottom = "auto";
-  const keyboardOpen = vv.height < window.innerHeight * 0.85;
-  modal.style.alignItems = keyboardOpen ? "flex-start" : "center";
-  modal.style.overflowY = "auto";
+// ---------- PIN setup ----------
+function openPinModal() {
+  document.getElementById("pin-error").textContent = "";
+  document.getElementById("pin-input").value = "";
+  openModal(document.getElementById("pin-modal"));
 }
 
-function resetNameModalViewport() {
-  const modal = document.getElementById("name-modal");
-  modal.style.height = "";
-  modal.style.top = "";
-  modal.style.bottom = "";
-  modal.style.alignItems = "";
-  modal.style.overflowY = "";
+function validatePin(raw) {
+  return /^\d{4}$/.test(raw.trim());
 }
 
-function closeNameModal() {
-  document.getElementById("name-modal").classList.add("hidden");
-  resetNameModalViewport();
+function confirmPin() {
+  const raw = document.getElementById("pin-input").value.trim();
+  const errEl = document.getElementById("pin-error");
+  if (!validatePin(raw)) { errEl.textContent = "PIN must be exactly 4 digits."; return; }
+  closeModal(document.getElementById("pin-modal"));
+
+  if (pinModalMode === "onboarding") {
+    pendingPetPin = raw;
+    openModal(document.getElementById("gl-modal"));
+  } else {
+    state.pin = raw;
+    state.pinPromptDismissed = true;
+    saveState();
+    showToast("PIN saved! 🔒");
+    ensureCloud().then(() => scheduleCloudSync());
+    renderSecurePrompts();
+  }
 }
 
-if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", adjustNameModalForKeyboard);
-  window.visualViewport.addEventListener("scroll", adjustNameModalForKeyboard);
+function skipPin() {
+  closeModal(document.getElementById("pin-modal"));
+  if (pinModalMode === "onboarding") {
+    pendingPetPin = null;
+    openModal(document.getElementById("gl-modal"));
+  } else {
+    state.pinPromptDismissed = true;
+    saveState();
+    renderSecurePrompts();
+  }
 }
+
+document.getElementById("pin-confirm").addEventListener("click", confirmPin);
+document.getElementById("pin-skip").addEventListener("click", skipPin);
+document.getElementById("pin-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") confirmPin();
+});
+
+function renderSecurePrompts() {
+  const needsPin = !!state.petType && !state.pin;
+  document.getElementById("secure-banner").classList.toggle("hidden", !needsPin);
+  document.getElementById("secure-pin-btn").classList.toggle("hidden", !needsPin);
+}
+
+document.getElementById("secure-banner-btn").addEventListener("click", () => {
+  pinModalMode = "standalone";
+  openPinModal();
+});
+document.getElementById("secure-pin-btn").addEventListener("click", () => {
+  pinModalMode = "standalone";
+  openPinModal();
+});
+
+// ---------- Restore pet ----------
+document.getElementById("show-restore-btn").addEventListener("click", () => {
+  document.getElementById("restore-error").textContent = "";
+  document.getElementById("restore-name-input").value = "";
+  document.getElementById("restore-pin-input").value = "";
+  openModal(document.getElementById("restore-modal"));
+});
+document.getElementById("restore-cancel").addEventListener("click", () => closeModal(document.getElementById("restore-modal")));
+
+async function confirmRestore() {
+  const name = document.getElementById("restore-name-input").value.trim();
+  const pin = document.getElementById("restore-pin-input").value.trim();
+  const errEl = document.getElementById("restore-error");
+  const btn = document.getElementById("restore-confirm");
+
+  if (!name || !validatePin(pin)) {
+    errEl.textContent = "Enter your pet's name and a 4-digit PIN.";
+    return;
+  }
+  if (!sb) { errEl.textContent = "Restore needs an internet connection."; return; }
+
+  btn.disabled = true;
+  btn.textContent = "Looking…";
+  errEl.textContent = "";
+  try {
+    const { data, error } = await sb.from("pets").select("*").ilike("pet_name", name).limit(1);
+    btn.disabled = false;
+    btn.textContent = "Restore";
+    if (error || !data || data.length === 0) {
+      errEl.textContent = "We couldn't find a pet with that name.";
+      return;
+    }
+    const row = data[0];
+    if (!row.pin || row.pin !== pin) {
+      errEl.textContent = "Pet name or PIN didn't match.";
+      return;
+    }
+    const backup = row.backup || {};
+    state = {
+      petType: row.pet_type,
+      petName: row.pet_name,
+      pin: row.pin,
+      cloudId: row.id,
+      isGreatLakes: !!row.is_great_lakes,
+      level: row.level || 1,
+      strength: row.strength || 0,
+      xp: backup.xp || 0,
+      habits: (backup.habits && backup.habits.length) ? backup.habits : freshHabits(),
+      history: backup.history || {},
+      todayCompleted: backup.todayCompleted || {},
+      lastActiveDate: backup.lastActiveDate || null,
+      pinPromptDismissed: true,
+    };
+    saveState();
+    closeModal(document.getElementById("restore-modal"));
+    resetDailyIfNewDay();
+    showToast(`Welcome back, ${state.petName}! 🎉`);
+    showGameScreen();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "Restore";
+    errEl.textContent = "Something went wrong. Try again.";
+  }
+}
+document.getElementById("restore-confirm").addEventListener("click", confirmRestore);
+document.getElementById("restore-pin-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") confirmRestore();
+});
 
 // ---------- Great Lakes question ----------
 async function finishOnboarding(isGL) {
@@ -309,11 +521,14 @@ async function finishOnboarding(isGL) {
   if (pendingPetType) {
     state.petType = pendingPetType;
     state.petName = pendingPetName;
+    state.pin = pendingPetPin;
+    state.pinPromptDismissed = !!pendingPetPin;
     pendingPetType = null;
     pendingPetName = null;
+    pendingPetPin = null;
   }
   saveState();
-  document.getElementById("gl-modal").classList.add("hidden");
+  closeModal(document.getElementById("gl-modal"));
   await ensureCloud();
   showGameScreen();
 }
@@ -321,6 +536,16 @@ document.getElementById("gl-yes").addEventListener("click", () => finishOnboardi
 document.getElementById("gl-no").addEventListener("click", () => finishOnboarding(false));
 
 // ---------- Cloud sync (Supabase) ----------
+function backupPayload() {
+  return {
+    xp: state.xp,
+    habits: state.habits,
+    history: state.history,
+    todayCompleted: state.todayCompleted,
+    lastActiveDate: state.lastActiveDate,
+  };
+}
+
 async function ensureCloud() {
   if (!sb || state.cloudId || !state.petName) return;
   try {
@@ -330,6 +555,8 @@ async function ensureCloud() {
       is_great_lakes: !!state.isGreatLakes,
       strength: state.strength,
       level: state.level,
+      pin: state.pin || null,
+      backup: backupPayload(),
     }).select().single();
     if (ins.data) { state.cloudId = ins.data.id; saveState(); return; }
     // If the name already exists (e.g. this user returning after clearing data),
@@ -341,12 +568,20 @@ async function ensureCloud() {
   } catch (e) { console.warn("ensureCloud:", e); }
 }
 
+let cloudSyncTimer = null;
+function scheduleCloudSync() {
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(syncToCloud, 800);
+}
+
 async function syncToCloud() {
   if (!sb || !state.cloudId) return;
   try {
     await sb.from("pets").update({
       strength: state.strength,
       level: state.level,
+      pin: state.pin || null,
+      backup: backupPayload(),
       updated_at: new Date().toISOString(),
     }).eq("id", state.cloudId);
   } catch (e) { console.warn("syncToCloud:", e); }
@@ -365,7 +600,9 @@ async function renderLeaderboard() {
     listEl.innerHTML = `<li class="lb-empty">Leaderboard is offline right now.</li>`;
     return;
   }
-  listEl.innerHTML = `<li class="lb-loading">Loading…</li>`;
+  // Soft loading: only show the "Loading…" placeholder if we have nothing on screen yet.
+  const hasRows = listEl.querySelector(".lb-row");
+  if (!hasRows) listEl.innerHTML = `<li class="lb-loading">Loading…</li>`;
   try {
     let q = sb.from("pets")
       .select("pet_name,pet_type,strength,level,is_great_lakes")
@@ -376,7 +613,7 @@ async function renderLeaderboard() {
     const { data, error } = await q;
     if (error) { listEl.innerHTML = `<li class="lb-empty">Couldn't load leaderboard.</li>`; return; }
     if (!data || data.length === 0) {
-      listEl.innerHTML = `<li class="lb-empty">No pets here yet — be the first! 🐾</li>`;
+      listEl.innerHTML = `<li class="lb-empty">No pets here yet — be the first to grow! 🌱</li>`;
       return;
     }
     listEl.innerHTML = "";
@@ -390,7 +627,7 @@ async function renderLeaderboard() {
         <span class="lb-rank">${medal}</span>
         <span class="lb-emoji">${emoji}</span>
         <span class="lb-name">${escapeHtml(row.pet_name)}<span class="lb-lv">Lv ${row.level}</span></span>
-        <span class="lb-strength">${row.strength} 💪</span>
+        <span class="lb-strength">${strengthDisplay(row.strength)} 💪</span>
       `;
       listEl.appendChild(li);
     });
@@ -399,15 +636,8 @@ async function renderLeaderboard() {
   }
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-
 document.querySelectorAll(".lb-tab").forEach(tab => {
   tab.addEventListener("click", () => {
-    document.querySelectorAll(".lb-tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
     lbScope = tab.dataset.scope;
     renderLeaderboard();
   });
@@ -426,18 +656,19 @@ function getPetStageEmoji() {
   return stageEmojiFor(state.petType, state.level);
 }
 
-function renderGameScreen() {
+function renderGameScreen(opts) {
+  opts = opts || {};
   document.getElementById("pet-name").textContent = state.petName;
   document.getElementById("pet-level").textContent = state.level;
   document.getElementById("pet-emoji").textContent = getPetStageEmoji();
-  document.getElementById("strength-value").textContent = state.strength > 0 ? state.strength : "–";
+  document.getElementById("strength-value").textContent = strengthDisplay(state.strength);
 
   const xpNeeded = xpNeededForLevel(state.level);
   document.getElementById("xp-current").textContent = state.xp;
   document.getElementById("xp-needed").textContent = xpNeeded;
   document.getElementById("xp-fill").style.width = `${Math.min(100, (state.xp / xpNeeded) * 100)}%`;
 
-  document.getElementById("today-date").textContent = new Date().toLocaleDateString(undefined, {
+  document.getElementById("today-date").textContent = istNow().toLocaleDateString(undefined, {
     weekday: "short", month: "short", day: "numeric",
   });
 
@@ -446,28 +677,33 @@ function renderGameScreen() {
   renderLadder();
   renderHabitList();
   renderHeatmap();
-  renderLeaderboard();
+  renderSecurePrompts();
+  if (opts.refreshLeaderboard) renderLeaderboard();
 }
 
 function renderHabitList() {
   const list = document.getElementById("habit-list");
   list.innerHTML = "";
-  state.habits.forEach((habit, idx) => {
+  state.habits.forEach((habit) => {
     const li = document.createElement("li");
-    const done = !!state.todayCompleted[idx];
+    const done = !!state.todayCompleted[habit.id];
     li.className = "habit-item" + (done ? " done" : "");
     li.innerHTML = `
       <div class="habit-checkbox">${done ? "✓" : ""}</div>
-      <div class="habit-text">${habit.text}</div>
+      <div class="habit-text">${escapeHtml(habit.text)}</div>
     `;
-    li.addEventListener("click", () => toggleHabit(idx));
+    const activate = () => toggleHabit(habit.id);
+    li.addEventListener("click", activate);
+    makeFocusable(li, activate);
 
-    const info = infoForHabit(habit.text);
+    const info = infoForHabit(habit);
     if (info) {
       const infoBtn = document.createElement("button");
+      infoBtn.type = "button";
       infoBtn.className = "habit-info-btn";
       infoBtn.textContent = "ⓘ";
       infoBtn.title = "Why this matters";
+      infoBtn.setAttribute("aria-label", "Why this matters");
       infoBtn.addEventListener("click", e => {
         e.stopPropagation(); // don't toggle the habit
         openInfoModal(info);
@@ -478,21 +714,21 @@ function renderHabitList() {
   });
 }
 
-function toggleHabit(idx) {
-  const wasDone = !!state.todayCompleted[idx];
+function toggleHabit(habitId) {
+  const wasDone = !!state.todayCompleted[habitId];
   if (wasDone) {
-    delete state.todayCompleted[idx];
-    state.xp = Math.max(0, state.xp - XP_PER_HABIT);
+    delete state.todayCompleted[habitId];
+    removeXp(XP_PER_HABIT);
     state.strength = Math.max(0, state.strength - STRENGTH_PER_HABIT);
   } else {
-    state.todayCompleted[idx] = true;
+    state.todayCompleted[habitId] = true;
     addXp(XP_PER_HABIT);
     state.strength += STRENGTH_PER_HABIT;
     showToast(`+${STRENGTH_PER_HABIT} strength! 💪`);
   }
   saveState();
   renderGameScreen();
-  syncToCloud();
+  scheduleCloudSync();
   if (!wasDone) bouncePet();
 }
 
@@ -508,6 +744,16 @@ function addXp(amount) {
       bouncePet();
     }, 300);
   }
+}
+
+// Mirrors addXp so unchecking a habit cleanly reverses a level-up too.
+function removeXp(amount) {
+  state.xp -= amount;
+  while (state.xp < 0 && state.level > 1) {
+    state.level -= 1;
+    state.xp += xpNeededForLevel(state.level);
+  }
+  state.xp = Math.max(0, state.xp);
 }
 
 // ---------- Pet Mood ----------
@@ -557,7 +803,7 @@ function confetti() {
     layer.id = "confetti-layer";
     document.body.appendChild(layer);
   }
-  const colors = ["#ffb703", "#43aa8b", "#e07a5f", "#90be6d", "#577590", "#f9c74f"];
+  const colors = ["#FF8C42", "#43aa8b", "#E0735F", "#90be6d", "#577590", "#f9c74f"];
   for (let i = 0; i < 80; i++) {
     const piece = document.createElement("div");
     piece.className = "confetti-piece";
@@ -607,8 +853,6 @@ function colorForRatio(ratio) {
 }
 
 // ---------- Manage Habits Modal ----------
-const RECOMMENDED_MAX = 6;
-
 function renderManageModal() {
   const count = state.habits.length;
   const countEl = document.getElementById("manage-count");
@@ -618,44 +862,67 @@ function renderManageModal() {
 
   const list = document.getElementById("manage-list");
   list.innerHTML = "";
-  state.habits.forEach((habit, idx) => {
+  state.habits.forEach((habit) => {
     const li = document.createElement("li");
     li.className = "manage-item";
-    li.innerHTML = `<span>${habit.text}</span>`;
+    const span = document.createElement("span");
+    span.textContent = habit.text;
+    li.appendChild(span);
     const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
     removeBtn.textContent = "Remove";
-    removeBtn.addEventListener("click", () => {
-      state.habits.splice(idx, 1);
-      saveState();
-      renderManageModal();
-      renderGameScreen();
-    });
+    removeBtn.addEventListener("click", () => removeHabit(habit.id));
     li.appendChild(removeBtn);
     list.appendChild(li);
   });
 }
 
+function removeHabit(habitId) {
+  if (state.habits.length <= 1) {
+    showToast("You need at least 1 habit.");
+    return;
+  }
+  // Refund today's points if this habit was already checked off today.
+  if (state.todayCompleted[habitId]) {
+    removeXp(XP_PER_HABIT);
+    state.strength = Math.max(0, state.strength - STRENGTH_PER_HABIT);
+    delete state.todayCompleted[habitId];
+  }
+  state.habits = state.habits.filter(h => h.id !== habitId);
+  saveState();
+  renderManageModal();
+  renderGameScreen();
+  scheduleCloudSync();
+}
+
 document.getElementById("manage-habits-btn").addEventListener("click", () => {
   renderManageModal();
-  document.getElementById("manage-modal").classList.remove("hidden");
+  openModal(document.getElementById("manage-modal"));
 });
 
 document.getElementById("close-modal-btn").addEventListener("click", () => {
-  document.getElementById("manage-modal").classList.add("hidden");
+  closeModal(document.getElementById("manage-modal"));
 });
 
 document.getElementById("add-habit-btn").addEventListener("click", () => {
   const input = document.getElementById("new-habit-input");
   const text = input.value.trim();
-  if (text) {
-    state.habits.push({ text });
-    input.value = "";
-    saveState();
-    renderManageModal();
-    renderGameScreen();
-    if (state.habits.length > RECOMMENDED_MAX) {
-      showToast("Heads up: fewer habits stick better 🎯");
-    }
+  if (!text) return;
+
+  const dupe = state.habits.some(h => h.text.toLowerCase() === text.toLowerCase());
+  if (dupe) {
+    showToast("You already have that habit.");
+    return;
+  }
+
+  state.habits.push({ id: genId(), key: null, text });
+  input.value = "";
+  saveState();
+  renderManageModal();
+  renderGameScreen();
+  scheduleCloudSync();
+  if (state.habits.length > RECOMMENDED_MAX) {
+    showToast("Heads up: fewer habits stick better 🎯");
   }
 });
 
@@ -742,7 +1009,7 @@ function renderLadder() {
 // ---------- Evolution Preview ----------
 function renderEvoModal() {
   const pet = PET_TYPES[state.petType];
-  document.getElementById("evo-title").textContent = `How ${state.petName} grows 🌱`;
+  document.getElementById("evo-title").textContent = `How ${state.petName} grows`;
   const container = document.getElementById("evo-stages");
   container.innerHTML = "";
   let lastEmoji = null;
@@ -765,10 +1032,10 @@ function renderEvoModal() {
 
 document.getElementById("evo-btn").addEventListener("click", () => {
   renderEvoModal();
-  document.getElementById("evo-modal").classList.remove("hidden");
+  openModal(document.getElementById("evo-modal"));
 });
 document.querySelector("[data-close-evo]").addEventListener("click", () => {
-  document.getElementById("evo-modal").classList.add("hidden");
+  closeModal(document.getElementById("evo-modal"));
 });
 
 // Tap the pet to hear it!
@@ -781,10 +1048,10 @@ document.getElementById("pet-emoji").addEventListener("click", () => {
 function openInfoModal(info) {
   document.getElementById("info-title").textContent = info.title;
   document.getElementById("info-body").textContent = info.body;
-  document.getElementById("info-modal").classList.remove("hidden");
+  openModal(document.getElementById("info-modal"));
 }
 document.querySelector("[data-close-info]").addEventListener("click", () => {
-  document.getElementById("info-modal").classList.add("hidden");
+  closeModal(document.getElementById("info-modal"));
 });
 
 // ---------- Reusable Confirm ----------
@@ -792,10 +1059,10 @@ function showConfirm(title, body, onConfirm) {
   document.getElementById("confirm-title").textContent = title;
   document.getElementById("confirm-body").textContent = body;
   const modal = document.getElementById("confirm-modal");
-  modal.classList.remove("hidden");
+  openModal(modal);
   const okBtn = document.getElementById("confirm-ok");
   const cancelBtn = document.getElementById("confirm-cancel");
-  const close = () => modal.classList.add("hidden");
+  const close = () => closeModal(modal);
   okBtn.onclick = () => { close(); onConfirm(); };
   cancelBtn.onclick = close;
 }
@@ -804,7 +1071,7 @@ function showConfirm(title, body, onConfirm) {
 function showGameScreen() {
   document.getElementById("select-screen").classList.add("hidden");
   document.getElementById("game-screen").classList.remove("hidden");
-  renderGameScreen();
+  renderGameScreen({ refreshLeaderboard: true });
 }
 
 function showSelectScreen() {
@@ -816,6 +1083,8 @@ function showSelectScreen() {
 }
 
 // Keep the sky in sync if the app stays open across a time boundary.
+// (No leaderboard refetch here — avoids the periodic flicker; use the
+// Refresh button or switch leaderboard tabs to pull fresh standings.)
 setInterval(() => {
   if (!document.getElementById("game-screen").classList.contains("hidden")) {
     resetDailyIfNewDay();
@@ -831,7 +1100,7 @@ if (state.petType && PET_TYPES[state.petType]) {
   showGameScreen();
   if (state.isGreatLakes === undefined) {
     // Existing local player from before the leaderboard existed — ask once.
-    document.getElementById("gl-modal").classList.remove("hidden");
+    openModal(document.getElementById("gl-modal"));
   } else {
     ensureCloud();
   }

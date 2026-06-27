@@ -30,6 +30,7 @@
     <h1>Choose your pet</h1>
     <p class="subtitle">Pick a companion and start growing together.</p>
     <div id="pet-options" class="pet-grid"></div>
+    <button id="show-restore-btn" class="restore-link">Already have a pet? Restore it</button>
   </section>
 
   <!-- SCREEN 2: Main Game -->
@@ -48,7 +49,7 @@
     <div class="pet-stage">
       <div id="pet-emoji" class="pet-emoji" title="Tap me!">🥚</div>
       <div id="pet-mood" class="pet-mood"></div>
-      <button id="evo-btn" class="evo-cta">✨ See what I'll grow into</button>
+      <button id="evo-btn" class="evo-cta">See what I'll grow into</button>
       <div class="xp-bar-wrap">
         <div class="xp-bar"><div id="xp-fill" class="xp-fill"></div></div>
         <div class="xp-text"><span id="xp-current">0</span>/<span id="xp-needed">100</span> XP</div>
@@ -63,8 +64,13 @@
       </div>
     </div>
 
+    <div id="secure-banner" class="secure-banner hidden">
+      <span>🔒 Secure your pet so you can restore it on any device.</span>
+      <button id="secure-banner-btn">Set PIN</button>
+    </div>
+
     <div class="ladder-card">
-      <h2>Growth Ladder 🪜</h2>
+      <h2>Growth Ladder</h2>
       <div id="ladder" class="ladder"></div>
     </div>
 
@@ -94,6 +100,7 @@
       <ol id="lb-list" class="lb-list"></ol>
     </div>
 
+    <button id="secure-pin-btn" class="secure-pin-btn hidden">🔒 Set a recovery PIN</button>
     <button id="reset-btn" class="reset-btn">Reset Pet</button>
   </section>
 
@@ -130,7 +137,7 @@
   <!-- MODAL: Evolution preview -->
   <div id="evo-modal" class="modal hidden">
     <div class="modal-content">
-      <h2 id="evo-title">How your pet grows 🌱</h2>
+      <h2 id="evo-title">How your pet grows</h2>
       <p class="evo-sub">Stay consistent with your habits to evolve through these stages:</p>
       <div id="evo-stages" class="evo-stages"></div>
       <button class="primary-btn" data-close-evo>Got it</button>
@@ -154,6 +161,38 @@
       <div class="modal-actions">
         <button id="confirm-cancel" class="ghost-btn">Cancel</button>
         <button id="confirm-ok" class="danger-btn">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Set a PIN -->
+  <div id="pin-modal" class="modal hidden">
+    <div class="modal-content name-modal-content">
+      <div class="name-modal-emoji">🔒</div>
+      <h2>Set a recovery PIN</h2>
+      <p class="name-modal-sub">Pick a 4-digit PIN. With your pet's name + this PIN, you can restore your pet on any device — no email or password needed.</p>
+      <input id="pin-input" class="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="off">
+      <p class="pin-hint">This is a light lock, not bank-level security — don't reuse a PIN you use elsewhere.</p>
+      <div id="pin-error" class="name-error"></div>
+      <div class="modal-actions">
+        <button id="pin-skip" class="ghost-btn">Maybe later</button>
+        <button id="pin-confirm" class="primary-btn">Save PIN</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Restore pet -->
+  <div id="restore-modal" class="modal hidden">
+    <div class="modal-content name-modal-content">
+      <div class="name-modal-emoji">🐾</div>
+      <h2>Restore your pet</h2>
+      <p class="name-modal-sub">Enter your pet's name and your 4-digit PIN to bring it back.</p>
+      <input id="restore-name-input" type="text" placeholder="Pet name" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
+      <input id="restore-pin-input" class="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="off">
+      <div id="restore-error" class="name-error"></div>
+      <div class="modal-actions">
+        <button id="restore-cancel" class="ghost-btn">Back</button>
+        <button id="restore-confirm" class="primary-btn">Restore</button>
       </div>
     </div>
   </div>
