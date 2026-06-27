@@ -479,15 +479,23 @@ async function confirmRestore() {
       return;
     }
     const row = data[0];
-    if (!row.pin || row.pin !== pin) {
+    let claiming = false;
+    if (!row.pin) {
+      // This pet predates the PIN feature — claim it by setting this PIN now.
+      claiming = true;
+    } else if (row.pin !== pin) {
       errEl.textContent = "Pet name or PIN didn't match.";
       return;
+    }
+    if (claiming) {
+      try { await sb.from("pets").update({ pin }).eq("id", row.id); }
+      catch (e) { console.warn("claim pin update:", e); }
     }
     const backup = row.backup || {};
     state = {
       petType: row.pet_type,
       petName: row.pet_name,
-      pin: row.pin,
+      pin: pin,
       cloudId: row.id,
       isGreatLakes: !!row.is_great_lakes,
       level: row.level || 1,
@@ -502,7 +510,7 @@ async function confirmRestore() {
     saveState();
     closeModal(document.getElementById("restore-modal"));
     resetDailyIfNewDay();
-    showToast(`Welcome back, ${state.petName}! 🎉`);
+    showToast(claiming ? `PIN set! Welcome back, ${state.petName} 🔒` : `Welcome back, ${state.petName}! 🎉`);
     showGameScreen();
   } catch (e) {
     btn.disabled = false;
