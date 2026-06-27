@@ -633,12 +633,11 @@ body.night .secure-banner button { color: #C4B5FD; }
   line-height: 1.08;
   margin: 28px 0 12px;
 }
-.cert-t2 .cert-headline, .cert-t3 .cert-headline {
-  background: linear-gradient(135deg, #D4AF37, #F4E5B2, #D4AF37);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+/* No gradient-clip text here: html2canvas (which rasterizes this template
+   into the shareable image) doesn't support background-clip:text - it was
+   painting the gradient as a solid gold box behind equally-gold text,
+   making the headline unreadable. Plain solid gold (inherited from
+   .cert-t2/.cert-t3 above) renders correctly. */
 
 .cert-subtitle {
   font-family: "Inter", sans-serif;
