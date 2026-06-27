@@ -557,6 +557,54 @@ body.night .evo-cta { color: #C4B5FD; background: rgba(167,139,250,0.15); }
 body.night .secure-banner { background: rgba(167,139,250,0.15); color: #C4B5FD; }
 body.night .secure-banner button { color: #C4B5FD; }
 
+/* ---------- Motivational Quote ---------- */
+.quote-card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  margin-bottom: 16px;
+}
+body.night .quote-card { background: #2a3052; color: #f0f0f5; }
+.quote-mark {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--brand-solid);
+  opacity: 0.5;
+  margin-bottom: 2px;
+}
+.quote-text {
+  font-size: 14px;
+  line-height: 1.6;
+  font-style: italic;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+body.night .quote-text { color: #f0f0f5; }
+.quote-author {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-align: right;
+}
+body.night .quote-author { color: #b9bcd6; }
+
+/* On wide screens there's room beside the dashboard — let the quote float
+   there instead of sitting inline. On a phone (the common case, since this
+   app is mostly used installed on a home screen) it just stays in-flow. */
+@media (min-width: 1100px) {
+  .quote-card {
+    position: fixed;
+    top: 50%;
+    right: 32px;
+    transform: translateY(-50%);
+    width: 260px;
+    margin-bottom: 0;
+  }
+}
+
 /* ---------- Growth Ladder ---------- */
 .ladder-card {
   background: white;

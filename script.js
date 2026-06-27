@@ -94,6 +94,40 @@ function infoForHabit(habit) {
   return habit.key ? HABIT_INFO[habit.key] : null;
 }
 
+// On growth, failure, and the discipline it takes to actually improve.
+const QUOTES = [
+  { text: "I have not failed. I've just found 10,000 ways that won't work.", author: "Thomas Edison" },
+  { text: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+  { text: "The expert in anything was once a beginner.", author: "Helen Hayes" },
+  { text: "Growth and comfort do not coexist.", author: "Ginni Rometty" },
+  { text: "The cave you fear to enter holds the treasure you seek.", author: "Joseph Campbell" },
+  { text: "It's not whether you get knocked down — it's whether you get up.", author: "Vince Lombardi" },
+  { text: "I am not afraid of storms, for I am learning how to sail my ship.", author: "Louisa May Alcott" },
+  { text: "Whether you think you can, or you think you can't — you're right.", author: "Henry Ford" },
+  { text: "Hard choices, easy life. Easy choices, hard life.", author: "Jerzy Gregorek" },
+  { text: "A ship in harbor is safe, but that is not what ships are built for.", author: "John A. Shedd" },
+  { text: "Risk comes from not knowing what you're doing.", author: "Warren Buffett" },
+  { text: "If you're not a bit embarrassed by who you were a year ago, you probably haven't grown much.", author: "Alain de Botton" },
+  { text: "Fall seven times, stand up eight.", author: "Japanese Proverb" },
+  { text: "It is impossible to live without failing at something, unless you live so cautiously that you might as well not have lived at all.", author: "J.K. Rowling" },
+  { text: "It is hard to fail, but it is worse never to have tried to succeed.", author: "Theodore Roosevelt" },
+];
+
+// Same quote all day for everyone, changing daily — a quiet daily ritual to
+// match the habit-checking one. Picked by hashing the IST date string.
+function quoteForToday() {
+  const key = todayKey();
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  return QUOTES[hash % QUOTES.length];
+}
+
+function renderQuote() {
+  const q = quoteForToday();
+  document.getElementById("quote-text").textContent = q.text;
+  document.getElementById("quote-author").textContent = `— ${q.author}`;
+}
+
 // First letter capital, rest lowercase (sentence case).
 function sentenceCase(s) {
   s = s.trim();
@@ -724,6 +758,7 @@ function renderGameScreen(opts) {
   applyTheme();
   renderMood();
   renderLadder();
+  renderQuote();
   renderHabitList();
   renderHeatmap();
   renderSecurePrompts();
