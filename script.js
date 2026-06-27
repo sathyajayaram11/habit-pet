@@ -773,17 +773,19 @@ function totalXpEarned() {
   return cumulativeXpForLevel(state.level) + state.xp;
 }
 
-// Tier cutoffs are calibrated to this app's real pace (~120 XP/day max),
-// not arbitrary round numbers — see level math: Lv10 ~3wk, Lv30+ ~5mo+.
+// Tier cutoffs target a realistic usage span (weeks, not months/years) —
+// Tier 3 lines up with meaningful, well-known milestones: Level 10 is when
+// every pet finishes evolving, and 21 days is the classic "habit formed"
+// benchmark. Both reachable inside about a month of real use.
 function levelTier(level) {
-  if (level >= 30) return 3;
-  if (level >= 10) return 2;
+  if (level >= 10) return 3;
+  if (level >= 5) return 2;
   return 1;
 }
 function streakTier(days) {
-  if (days >= 100) return 3;
-  if (days >= 30) return 2;
-  if (days >= 7) return 1;
+  if (days >= 21) return 3;
+  if (days >= 7) return 2;
+  if (days >= 3) return 1;
   return 0;
 }
 function overallTier() {
