@@ -739,6 +739,203 @@ function getPetStageEmoji() {
   return stageEmojiFor(state.petType, state.level);
 }
 
+// ---------- Streak & Milestone Tiers (drive the shareable certificate) ----------
+// Counts consecutive days (ending today, if today is already fully checked
+// off) where every habit was completed. Nothing tracked this before.
+function computeCurrentStreak() {
+  const total = state.habits.length;
+  if (total === 0) return 0;
+  let streak = 0;
+  const doneToday = Object.values(state.todayCompleted).filter(Boolean).length;
+  if (doneToday === total) streak = 1;
+
+  const cursor = istNow();
+  cursor.setDate(cursor.getDate() - 1);
+  while (true) {
+    const key = cursor.toISOString().slice(0, 10);
+    const rec = state.history[key];
+    if (rec && rec.totalCount > 0 && rec.doneCount === rec.totalCount) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+function cumulativeXpForLevel(level) {
+  let total = 0;
+  for (let i = 1; i < level; i++) total += xpNeededForLevel(i);
+  return total;
+}
+function totalXpEarned() {
+  return cumulativeXpForLevel(state.level) + state.xp;
+}
+
+// Tier cutoffs are calibrated to this app's real pace (~120 XP/day max),
+// not arbitrary round numbers — see level math: Lv10 ~3wk, Lv30+ ~5mo+.
+function levelTier(level) {
+  if (level >= 30) return 3;
+  if (level >= 10) return 2;
+  return 1;
+}
+function streakTier(days) {
+  if (days >= 100) return 3;
+  if (days >= 30) return 2;
+  if (days >= 7) return 1;
+  return 0;
+}
+function overallTier() {
+  return Math.max(levelTier(state.level), streakTier(computeCurrentStreak()));
+}
+// Whichever is rarer (higher tier) becomes the certificate's headline.
+function bestAchievement() {
+  const lvlTier = levelTier(state.level);
+  const streak = computeCurrentStreak();
+  const strTier = streakTier(streak);
+  if (strTier >= lvlTier && strTier > 0) return { type: "streak", value: streak, tier: strTier };
+  return { type: "level", value: state.level, tier: lvlTier };
+}
+
+function consistencyPercent() {
+  let done = 0, possible = 0;
+  for (let i = 0; i <= 29; i++) {
+    const d = istNow();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    let rec = state.history[key];
+    if (key === todayKey()) {
+      rec = { doneCount: Object.values(state.todayCompleted).filter(Boolean).length, totalCount: state.habits.length };
+    }
+    if (rec && rec.totalCount > 0) { done += rec.doneCount; possible += rec.totalCount; }
+  }
+  return possible > 0 ? Math.round((done / possible) * 100) : 0;
+}
+
+async function fetchGLRank() {
+  if (!sb || !state.isGreatLakes) return null;
+  try {
+    const { data } = await sb.from("pets").select("pet_name,strength,level")
+      .eq("is_great_lakes", true)
+      .order("strength", { ascending: false })
+      .order("level", { ascending: false })
+      .limit(200);
+    if (!data) return null;
+    const idx = data.findIndex(r => r.pet_name === state.petName);
+    return idx >= 0 ? idx + 1 : null;
+  } catch (e) { return null; }
+}
+
+// ---------- Certificate generation ----------
+async function populateCertificateTemplate(achievement) {
+  const tpl = document.getElementById("cert-template");
+  tpl.classList.remove("cert-t1", "cert-t2", "cert-t3");
+  tpl.classList.add(`cert-t${achievement.tier}`);
+
+  const headline = achievement.type === "streak"
+    ? `${achievement.value} DAY STREAK`
+    : `LEVEL ${achievement.value}`;
+  document.getElementById("cert-headline").textContent = headline;
+  document.getElementById("cert-subtitle").textContent =
+    `${state.petName} the ${PET_TYPES[state.petType].name} · ` +
+    istNow().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+  document.getElementById("cert-xp").textContent = totalXpEarned().toLocaleString();
+  document.getElementById("cert-consistency").textContent = `${consistencyPercent()}%`;
+  document.getElementById("cert-stage").textContent = `${getPetStageEmoji()} ${PET_TYPES[state.petType].name}`;
+
+  const badge = document.getElementById("cert-gl-badge");
+  const rank = await fetchGLRank();
+  if (rank) {
+    document.getElementById("cert-gl-rank").textContent = rank;
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
+}
+
+function captureCertificate() {
+  return html2canvas(document.getElementById("cert-template"), {
+    scale: 2,
+    backgroundColor: null,
+  });
+}
+
+let lastCertBlob = null;
+
+async function openCertificateModal(forcedAchievement) {
+  const modal = document.getElementById("cert-modal");
+  document.getElementById("cert-loading").textContent = "Generating your certificate…";
+  document.getElementById("cert-loading").classList.remove("hidden");
+  document.getElementById("cert-preview-img").classList.add("hidden");
+  document.getElementById("cert-share-btn").classList.add("hidden");
+  document.getElementById("cert-download-btn").classList.add("hidden");
+  openModal(modal);
+
+  const achievement = forcedAchievement || bestAchievement();
+  await populateCertificateTemplate(achievement);
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  await new Promise(r => setTimeout(r, 50));
+
+  try {
+    const canvas = await captureCertificate();
+    canvas.toBlob(blob => {
+      lastCertBlob = blob;
+      const url = URL.createObjectURL(blob);
+      const img = document.getElementById("cert-preview-img");
+      img.src = url;
+      document.getElementById("cert-loading").classList.add("hidden");
+      img.classList.remove("hidden");
+      document.getElementById("cert-download-btn").classList.remove("hidden");
+
+      const file = new File([blob], "thunai-certificate.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        document.getElementById("cert-share-btn").classList.remove("hidden");
+      }
+    }, "image/png");
+  } catch (e) {
+    console.warn("certificate capture failed:", e);
+    document.getElementById("cert-loading").textContent = "Couldn't generate the certificate — try again.";
+  }
+}
+
+async function handleInstagramShare() {
+  if (!lastCertBlob) return;
+  const file = new File([lastCertBlob], "thunai-certificate.png", { type: "image/png" });
+  try {
+    await navigator.share({ files: [file], title: "My Thunai progress" });
+  } catch (e) { /* user cancelled the share sheet — no-op */ }
+}
+
+function downloadCertificate() {
+  if (!lastCertBlob) return;
+  const url = URL.createObjectURL(lastCertBlob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "thunai-certificate.png";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+document.getElementById("share-cert-btn").addEventListener("click", () => openCertificateModal());
+document.getElementById("cert-close-btn").addEventListener("click", () => closeModal(document.getElementById("cert-modal")));
+document.getElementById("cert-share-btn").addEventListener("click", handleInstagramShare);
+document.getElementById("cert-download-btn").addEventListener("click", downloadCertificate);
+
+// Auto-celebrate the first time a habit-check pushes the user into a new tier
+// (level or streak, whichever is rarer) — doesn't re-fire for the same tier.
+function checkMilestone() {
+  const tier = overallTier();
+  if (tier > (state.lastMilestoneTierShown || 0)) {
+    state.lastMilestoneTierShown = tier;
+    saveState();
+    setTimeout(() => openCertificateModal(), 900);
+  }
+}
+
 function renderGameScreen(opts) {
   opts = opts || {};
   document.getElementById("pet-name").textContent = state.petName;
@@ -813,7 +1010,10 @@ function toggleHabit(habitId) {
   saveState();
   renderGameScreen();
   scheduleCloudSync();
-  if (!wasDone) bouncePet();
+  if (!wasDone) {
+    bouncePet();
+    checkMilestone();
+  }
 }
 
 function addXp(amount) {

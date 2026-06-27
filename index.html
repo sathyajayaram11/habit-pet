@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="Thunai">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+Thambi+2:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Thambi+2:wght@600;800&family=Playfair+Display:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -63,6 +63,8 @@
         <div class="strength-value" id="strength-value">0</div>
       </div>
     </div>
+
+    <button id="share-cert-btn" class="evo-cta cert-trigger-btn">🏆 Share Certificate</button>
 
     <div id="secure-banner" class="secure-banner hidden">
       <span>🔒 Secure your pet so you can restore it on any device.</span>
@@ -216,12 +218,50 @@
     </div>
   </div>
 
+  <!-- MODAL: Share Certificate -->
+  <div id="cert-modal" class="modal hidden">
+    <div class="modal-content cert-modal-content">
+      <h2>Share your progress</h2>
+      <div id="cert-loading" class="cert-loading">Generating your certificate…</div>
+      <img id="cert-preview-img" class="cert-preview-img hidden" alt="Your Thunai achievement certificate">
+      <div class="modal-actions">
+        <button id="cert-close-btn" class="ghost-btn">Close</button>
+        <button id="cert-share-btn" class="primary-btn hidden">Share to Instagram</button>
+      </div>
+      <button id="cert-download-btn" class="link-btn hidden">Or download the image</button>
+    </div>
+  </div>
+
+  <!-- Hidden off-screen template captured into the certificate image -->
+  <div id="cert-template" class="cert-template cert-t1">
+    <div class="cert-wordmark">🌱 THUNAI</div>
+    <div id="cert-headline" class="cert-headline">LEVEL 1</div>
+    <div id="cert-subtitle" class="cert-subtitle"></div>
+    <div class="cert-stats">
+      <div class="cert-stat">
+        <div id="cert-xp" class="cert-stat-value">0</div>
+        <div class="cert-stat-label">XP Earned</div>
+      </div>
+      <div class="cert-stat">
+        <div id="cert-consistency" class="cert-stat-value">0%</div>
+        <div class="cert-stat-label">Consistency</div>
+      </div>
+      <div class="cert-stat">
+        <div id="cert-stage" class="cert-stat-value">🐶</div>
+        <div class="cert-stat-label">Pet Stage</div>
+      </div>
+    </div>
+    <div id="cert-gl-badge" class="cert-gl-badge hidden">Great Lakes Rank: #<span id="cert-gl-rank"></span></div>
+    <div class="cert-footer">habit-pet-two.vercel.app</div>
+  </div>
+
   <!-- TOAST -->
   <div id="toast" class="toast hidden"></div>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="config.js"></script>
 <script src="script.js"></script>
 </body>

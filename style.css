@@ -557,6 +557,115 @@ body.night .evo-cta { color: #C4B5FD; background: rgba(167,139,250,0.15); }
 body.night .secure-banner { background: rgba(167,139,250,0.15); color: #C4B5FD; }
 body.night .secure-banner button { color: #C4B5FD; }
 
+/* ---------- Certificate (deliberately separate "prestige" sub-brand —
+   not tied to Thunai's violet/cream palette or rounded font) ---------- */
+.cert-trigger-btn { display: block; width: 100%; text-align: center; }
+
+.cert-modal-content { text-align: center; }
+.cert-loading { padding: 50px 0; color: var(--ink-soft); font-size: 14px; }
+.cert-preview-img {
+  width: 100%;
+  max-width: 260px;
+  border-radius: 10px;
+  margin: 0 auto 16px;
+  display: block;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+.cert-template {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 540px;
+  height: 960px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 64px 44px;
+  text-align: center;
+}
+.cert-t1 { background: #FDFCF0; color: #1B3022; }
+.cert-t2 { background: #1B3022; color: #D4AF37; }
+.cert-t3 { background: #0B0B0E; color: #D4AF37; }
+
+.cert-wordmark {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: 5px;
+}
+
+.cert-headline {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 800;
+  font-size: 88px;
+  line-height: 1.08;
+  margin: 28px 0 12px;
+}
+.cert-t2 .cert-headline, .cert-t3 .cert-headline {
+  background: linear-gradient(135deg, #D4AF37, #F4E5B2, #D4AF37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cert-subtitle {
+  font-family: "Inter", sans-serif;
+  font-size: 17px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 36px;
+}
+
+.cert-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  padding: 26px 0;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.95;
+}
+.cert-stat { flex: 1; min-width: 0; }
+.cert-stat-value {
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  white-space: nowrap;
+}
+.cert-stat-label {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin-top: 6px;
+}
+
+.cert-gl-badge {
+  margin-top: 28px;
+  border: 2px solid #D4AF37;
+  color: #D4AF37;
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  padding: 10px 22px;
+  border-radius: 999px;
+}
+.cert-t1 .cert-gl-badge { color: #1B3022; border-color: #1B3022; }
+
+.cert-footer {
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  opacity: 0.55;
+}
+
 /* ---------- Motivational Quote ---------- */
 .quote-card {
   background: var(--surface);
