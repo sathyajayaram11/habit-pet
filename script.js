@@ -326,6 +326,37 @@ let pinModalMode = "onboarding"; // "onboarding" | "standalone"
 
 const BLOCKED_NAMES = /^(name|test|user|player|pet|demo|sample|abc|xyz|temp|asdf|qwerty)\d*$/i;
 
+// Pet names are public (they show on the leaderboard), so block common
+// profanity/slurs — including a few Hindi/Tamil-origin ones likely in this
+// audience. This is a basic deterrent, not exhaustive moderation; anything
+// that slips through can still be removed by hand from the Supabase dashboard.
+const PROFANITY_LIST = [
+  "fuck", "shit", "bitch", "asshole", "bastard", "dick", "pussy", "cunt", "slut", "whore",
+  "nigger", "nigga", "faggot", "retard", "rape", "porn", "boobs", "penis", "vagina",
+  "chutiya", "madarchod", "madharchod", "behenchod", "bhenchod", "gandu", "gaandu",
+  "randi", "harami", "lavda", "lauda", "lund", "chinal", "kamina", "chutia", "chod",
+  "otha", "punda", "thevidiya", "kandaroli",
+];
+
+// Strips spaces/punctuation and undoes common leetspeak substitutions, so
+// "f.u.c.k" or "fu4k" still match the plain word in the list above.
+function normalizeForFilter(s) {
+  return s
+    .toLowerCase()
+    .replace(/[@4]/g, "a")
+    .replace(/3/g, "e")
+    .replace(/[1!]/g, "i")
+    .replace(/0/g, "o")
+    .replace(/\$/g, "s")
+    .replace(/7/g, "t")
+    .replace(/[^a-z]/g, "");
+}
+
+function containsProfanity(raw) {
+  const normalized = normalizeForFilter(raw);
+  return PROFANITY_LIST.some(word => normalized.includes(word));
+}
+
 function validatePetName(raw) {
   const n = raw.trim();
   if (n.length < 2) return { ok: false, msg: "Name needs at least 2 letters." };
@@ -334,6 +365,7 @@ function validatePetName(raw) {
   if (/^\d+$/.test(compact)) return { ok: false, msg: "Pick a real name, not just numbers." };
   if (!/[a-z]/i.test(n)) return { ok: false, msg: "Name needs at least one letter." };
   if (BLOCKED_NAMES.test(compact)) return { ok: false, msg: "That's too generic — pick a unique name!" };
+  if (containsProfanity(n)) return { ok: false, msg: "That name isn't allowed — please pick another." };
   return { ok: true };
 }
 
