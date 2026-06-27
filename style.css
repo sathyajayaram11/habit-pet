@@ -394,6 +394,7 @@ body.night .pet-mood { color: #b9bcd6; }
   padding: 22px;
   width: 100%;
   max-width: 420px;
+  color: var(--ink);
 }
 .modal-content h2 { margin-bottom: 14px; }
 .manage-hint {
