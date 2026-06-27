@@ -1139,6 +1139,8 @@ function colorForRatio(ratio) {
 }
 
 // ---------- Manage Habits Modal ----------
+let editingHabitId = null;
+
 function renderManageModal() {
   const count = state.habits.length;
   const countEl = document.getElementById("manage-count");
@@ -1151,16 +1153,79 @@ function renderManageModal() {
   state.habits.forEach((habit) => {
     const li = document.createElement("li");
     li.className = "manage-item";
+
+    if (editingHabitId === habit.id) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "manage-edit-input";
+      input.maxLength = 40;
+      input.value = habit.text;
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") saveEditHabit(habit.id, input.value);
+        if (e.key === "Escape") { editingHabitId = null; renderManageModal(); }
+      });
+      li.appendChild(input);
+
+      const actions = document.createElement("div");
+      actions.className = "manage-item-actions";
+      const saveBtn = document.createElement("button");
+      saveBtn.type = "button";
+      saveBtn.textContent = "Save";
+      saveBtn.addEventListener("click", () => saveEditHabit(habit.id, input.value));
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.addEventListener("click", () => { editingHabitId = null; renderManageModal(); });
+      actions.appendChild(saveBtn);
+      actions.appendChild(cancelBtn);
+      li.appendChild(actions);
+
+      list.appendChild(li);
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      return;
+    }
+
     const span = document.createElement("span");
     span.textContent = habit.text;
     li.appendChild(span);
+
+    const actions = document.createElement("div");
+    actions.className = "manage-item-actions";
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", () => { editingHabitId = habit.id; renderManageModal(); });
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
     removeBtn.textContent = "Remove";
     removeBtn.addEventListener("click", () => removeHabit(habit.id));
-    li.appendChild(removeBtn);
+    actions.appendChild(editBtn);
+    actions.appendChild(removeBtn);
+    li.appendChild(actions);
+
     list.appendChild(li);
   });
+}
+
+function saveEditHabit(habitId, rawText) {
+  const text = rawText.trim();
+  if (!text) {
+    showToast("Habit name can't be empty.");
+    return;
+  }
+  const dupe = state.habits.some(h => h.id !== habitId && h.text.toLowerCase() === text.toLowerCase());
+  if (dupe) {
+    showToast("You already have that habit.");
+    return;
+  }
+  const habit = state.habits.find(h => h.id === habitId);
+  if (habit) habit.text = text;
+  editingHabitId = null;
+  saveState();
+  renderManageModal();
+  renderGameScreen();
+  scheduleCloudSync();
 }
 
 function removeHabit(habitId) {
@@ -1182,11 +1247,13 @@ function removeHabit(habitId) {
 }
 
 document.getElementById("manage-habits-btn").addEventListener("click", () => {
+  editingHabitId = null;
   renderManageModal();
   openModal(document.getElementById("manage-modal"));
 });
 
 document.getElementById("close-modal-btn").addEventListener("click", () => {
+  editingHabitId = null;
   closeModal(document.getElementById("manage-modal"));
 });
 

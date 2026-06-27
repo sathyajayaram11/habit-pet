@@ -397,10 +397,22 @@ body.night .pet-mood { color: #b9bcd6; }
   padding: 8px 4px;
   border-bottom: 1px solid #f2f2f2;
   font-size: 14px;
+  gap: 8px;
 }
+.manage-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.manage-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
 .manage-item button {
   background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px;
   padding: 6px 8px;
+  white-space: nowrap;
+}
+.manage-edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--brand-solid);
+  font-size: 14px;
 }
 .add-habit-row { display: flex; gap: 8px; margin-bottom: 16px; }
 .add-habit-row input {
