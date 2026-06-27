@@ -44,11 +44,27 @@ body {
 body.morning   { background: linear-gradient(160deg, #fff3b0 0%, #cdeffd 100%); }
 body.afternoon { background: linear-gradient(160deg, #aee1ff 0%, #e8f9ff 100%); }
 body.evening   { background: linear-gradient(160deg, #ffb88c 0%, #de6262 100%); }
-body.night     { background: linear-gradient(160deg, #1f2747 0%, #3a3f63 100%); color: #f0f0f5; }
+body.night {
+  background: linear-gradient(160deg, #0e1128 0%, #181c3f 100%);
+  color: #f0f0f5;
+  --night-card: #2b3158;
+  --night-border: rgba(167,139,250,0.18);
+  --night-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+/* Cards need their own lighter, bordered surface so they read as distinct
+   panels against the dark sky gradient instead of blending into it. */
 body.night .pet-stage,
 body.night .strength-panel,
 body.night .habits-card,
-body.night .heatmap-card { background: #2a3052; color: #f0f0f5; }
+body.night .heatmap-card,
+body.night .quote-card,
+body.night .ladder-card,
+body.night .leaderboard-card {
+  background: var(--night-card);
+  border: 1px solid var(--night-border);
+  box-shadow: var(--night-shadow);
+  color: #f0f0f5;
+}
 body.night .habit-text { color: #e6e6f0; }
 body.night .habit-item { border-bottom-color: #3a4068; }
 body.night .xp-text, body.night .habits-header span, body.night .strength-label { color: #b9bcd6; }
@@ -686,7 +702,6 @@ body.night .secure-banner button { color: #C4B5FD; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   margin-bottom: 16px;
 }
-body.night .quote-card { background: #2a3052; color: #f0f0f5; }
 .quote-mark {
   font-family: Georgia, "Times New Roman", serif;
   font-size: 36px;
@@ -734,7 +749,6 @@ body.night .quote-author { color: #b9bcd6; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   margin-bottom: 16px;
 }
-body.night .ladder-card { background: #2a3052; color: #f0f0f5; }
 .ladder-card h2 { font-size: 16px; margin-bottom: 14px; }
 
 .ladder { position: relative; display: flex; flex-direction: column; }
@@ -804,7 +818,6 @@ body.night .rung-sub { color: #b9bcd6; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
   margin-bottom: 16px;
 }
-body.night .leaderboard-card { background: #2a3052; color: #f0f0f5; }
 .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .lb-header h2 { font-size: 16px; }
 .lb-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
