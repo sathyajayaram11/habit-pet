@@ -165,6 +165,74 @@ body.night .xp-text, body.night .habits-header span, body.night .strength-label 
 }
 
 /* ---------- Game Screen ---------- */
+#game-screen { position: relative; }
+
+/* ---------- What's New ---------- */
+.whatsnew { position: absolute; top: 0; right: 0; z-index: 30; }
+.whatsnew-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.1s, background 0.15s;
+}
+.whatsnew-btn:active { transform: scale(0.96); }
+body.night .whatsnew-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #d9d9e6;
+}
+.wn-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #D4AF37;
+  display: inline-block;
+  animation: wnPulse 2.2s ease-out infinite;
+}
+@keyframes wnPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.55); }
+  70%  { box-shadow: 0 0 0 6px rgba(212, 175, 55, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+.whatsnew-pop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: min(280px, 80vw);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 14px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  z-index: 40;
+}
+.wn-arrow {
+  position: absolute;
+  top: -6px;
+  right: 16px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+.wn-head { font-weight: 800; font-size: 14px; color: var(--ink); }
+.wn-list { list-style: none; margin: 12px 0 14px; display: flex; flex-direction: column; gap: 12px; }
+.wn-item { display: flex; gap: 10px; align-items: flex-start; text-align: left; }
+.wn-emoji { font-size: 17px; line-height: 1.35; flex-shrink: 0; }
+.wn-text strong { display: block; font-size: 13px; color: var(--ink); margin-bottom: 1px; }
+.wn-text span { font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
+
 .game-brand {
   display: flex;
   align-items: center;

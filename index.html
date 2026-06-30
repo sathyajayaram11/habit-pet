@@ -35,6 +35,20 @@
 
   <!-- SCREEN 2: Main Game -->
   <section id="game-screen" class="screen hidden">
+
+    <!-- What's New (auto-hides when there are no updates from the last 7 days) -->
+    <div id="whatsnew" class="whatsnew hidden">
+      <button id="whatsnew-btn" class="whatsnew-btn" aria-label="What's new">
+        <span id="whatsnew-dot" class="wn-dot hidden"></span>What's New
+      </button>
+      <div id="whatsnew-pop" class="whatsnew-pop hidden" role="dialog" aria-label="What's new">
+        <div class="wn-arrow"></div>
+        <div class="wn-head">✨ What's New</div>
+        <ul id="whatsnew-list" class="wn-list"></ul>
+        <button id="whatsnew-got" class="primary-btn">Got it</button>
+      </div>
+    </div>
+
     <div class="game-brand">
       <img class="game-brand-mark" src="icon-192.png" alt="" width="26" height="26">
       <span class="game-brand-word">Thunai</span>

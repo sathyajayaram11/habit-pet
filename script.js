@@ -855,6 +855,72 @@ document.querySelectorAll(".lbm-tabs .lb-tab").forEach(tab => {
   document.getElementById(id).addEventListener("click", () =>
     closeModal(document.getElementById("lb-modal"))));
 
+// ---------- What's New ----------
+// User-facing updates from roughly the last week. Each carries an ISO date; the
+// panel only lists entries from the past 7 days and hides the whole button when
+// there are none — so it stays current without manual cleanup. Newest first.
+const WHATS_NEW = [
+  { date: "2026-06-30", emoji: "🏆", title: "Smart Leaderboard", body: "A sticky bar that instantly takes you to your batch rank — plus a full list of everyone." },
+  { date: "2026-06-27", emoji: "🎓", title: "Achievement Certificates", body: "Hit a level or streak milestone and share a premium certificate to your story." },
+  { date: "2026-06-27", emoji: "✏️", title: "Edit Your Habits", body: "Rename any habit anytime — without deleting it or losing your progress." },
+  { date: "2026-06-27", emoji: "🔒", title: "Pet Recovery", body: "Set a 4-digit PIN to restore your pet on any device." },
+  { date: "2026-06-27", emoji: "💬", title: "Daily Motivation", body: "A fresh quote on growth, failure and grit, every day." },
+];
+
+function recentUpdates() {
+  const cutoff = istNow();
+  cutoff.setDate(cutoff.getDate() - 7);
+  const cutoffKey = cutoff.toISOString().slice(0, 10);
+  return WHATS_NEW
+    .filter(u => u.date >= cutoffKey)
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function renderWhatsNew() {
+  const wrap = document.getElementById("whatsnew");
+  const updates = recentUpdates();
+  if (updates.length === 0) { wrap.classList.add("hidden"); return; } // nothing recent → no button at all
+  wrap.classList.remove("hidden");
+
+  document.getElementById("whatsnew-list").innerHTML = updates.map(u => `
+    <li class="wn-item">
+      <span class="wn-emoji">${u.emoji}</span>
+      <span class="wn-text"><strong>${u.title}</strong><span>${u.body}</span></span>
+    </li>`).join("");
+
+  // The gold dot pulses only while there's an update newer than the user last saw.
+  const unseen = updates[0].date > (state.whatsNewSeen || "");
+  document.getElementById("whatsnew-dot").classList.toggle("hidden", !unseen);
+}
+
+function openWhatsNew() { document.getElementById("whatsnew-pop").classList.remove("hidden"); }
+
+// Any close (Got it, outside-click, Escape) marks everything seen and stops the
+// dot for good — until something newer than whatsNewSeen ships.
+function closeWhatsNew() {
+  document.getElementById("whatsnew-pop").classList.add("hidden");
+  const updates = recentUpdates();
+  if (updates.length) { state.whatsNewSeen = updates[0].date; saveState(); }
+  document.getElementById("whatsnew-dot").classList.add("hidden");
+}
+
+document.getElementById("whatsnew-btn").addEventListener("click", e => {
+  e.stopPropagation();
+  const pop = document.getElementById("whatsnew-pop");
+  pop.classList.contains("hidden") ? openWhatsNew() : closeWhatsNew();
+});
+document.getElementById("whatsnew-got").addEventListener("click", closeWhatsNew);
+document.addEventListener("click", e => {
+  const pop = document.getElementById("whatsnew-pop");
+  if (pop.classList.contains("hidden")) return;
+  if (!document.getElementById("whatsnew").contains(e.target)) closeWhatsNew();
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  const pop = document.getElementById("whatsnew-pop");
+  if (!pop.classList.contains("hidden")) closeWhatsNew();
+});
+
 // ---------- Game Screen ----------
 function stageEmojiFor(typeKey, level) {
   const pet = PET_TYPES[typeKey];
@@ -1553,6 +1619,7 @@ function showGameScreen() {
   document.getElementById("select-screen").classList.add("hidden");
   document.getElementById("game-screen").classList.remove("hidden");
   renderGameScreen({ refreshLeaderboard: true });
+  renderWhatsNew();
 }
 
 function showSelectScreen() {
