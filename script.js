@@ -742,11 +742,75 @@ document.getElementById("lb-refresh").addEventListener("click", renderLeaderboar
 
 // ---------- Full leaderboard modal ----------
 let lbModalScope = "gl";
+let lbMineObserver = null; // watches the player's real row to show/hide the pinned copy
+
+function clearStickyMine() {
+  if (lbMineObserver) { lbMineObserver.disconnect(); lbMineObserver = null; }
+  const mineEl = document.getElementById("lb-modal-mine");
+  mineEl.innerHTML = "";
+  mineEl.classList.add("hidden");
+}
+
+// Smoothly scroll a container to a target scrollTop. Uses requestAnimationFrame
+// instead of native scroll-behavior:smooth, which is unreliable for custom
+// overflow containers (no-op in some Chromium builds, late iOS Safari support).
+function smoothScrollTo(el, to, duration = 420) {
+  const start = el.scrollTop;
+  const change = to - start;
+  if (Math.abs(change) < 2) { el.scrollTop = to; return; }
+  const t0 = performance.now();
+  const ease = p => (p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2); // easeInOutQuad
+  (function step(now) {
+    const p = Math.min(1, (now - t0) / duration);
+    el.scrollTop = start + change * ease(p);
+    if (p < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+// Sticky-anchor pattern: pin a copy of the player's own row to the bottom of the
+// modal, but only while their real row is scrolled out of view (an
+// IntersectionObserver hides the copy once the real row is visible, so there's
+// never a duplicate). Tapping the pinned row jumps to the real one with a flash.
+function updateStickyMine(listEl, data) {
+  clearStickyMine();
+  const mineEl = document.getElementById("lb-modal-mine");
+  const myIndex = data.findIndex(r => r.pet_name === state.petName);
+  if (myIndex === -1) return; // not on this list (e.g. not a Great Lakes student) → no anchor
+
+  mineEl.appendChild(lbRowEl(data[myIndex], myIndex));
+  mineEl.onclick = () => {
+    const realRow = listEl.querySelector(".lb-row.me");
+    if (!realRow) return;
+    // Center the player's real row in the list, scrolling the container itself.
+    const target = realRow.offsetTop - (listEl.clientHeight - realRow.clientHeight) / 2;
+    smoothScrollTo(listEl, Math.max(0, target));
+    realRow.classList.remove("lb-flash");
+    void realRow.offsetWidth; // force reflow so the animation can replay
+    realRow.classList.add("lb-flash");
+    setTimeout(() => realRow.classList.remove("lb-flash"), 1500);
+  };
+
+  const realRow = listEl.querySelector(".lb-row.me");
+  // True when the real row is at least half-visible inside the list viewport.
+  const rowVisibleInList = () => {
+    const rr = realRow.getBoundingClientRect(), lr = listEl.getBoundingClientRect();
+    const overlap = Math.max(0, Math.min(rr.bottom, lr.bottom) - Math.max(rr.top, lr.top));
+    return overlap >= rr.height * 0.5;
+  };
+  // Set the correct state synchronously now (the observer's first callback is
+  // async and can lag a frame), then keep it in sync as the user scrolls.
+  mineEl.classList.toggle("hidden", rowVisibleInList());
+  lbMineObserver = new IntersectionObserver(() => {
+    mineEl.classList.toggle("hidden", rowVisibleInList());
+  }, { root: listEl, threshold: [0, 0.5, 1] });
+  lbMineObserver.observe(realRow);
+}
 
 async function renderFullLeaderboard() {
   document.querySelectorAll(".lbm-tabs .lb-tab").forEach(t =>
     t.classList.toggle("active", t.dataset.mscope === lbModalScope));
   const listEl = document.getElementById("lb-modal-list");
+  clearStickyMine();
   if (!sb) { listEl.innerHTML = `<li class="lb-empty">Leaderboard is offline right now.</li>`; return; }
   const hasRows = listEl.querySelector(".lb-row");
   if (!hasRows) listEl.innerHTML = `<li class="lb-loading">Loading…</li>`;
@@ -765,14 +829,8 @@ async function renderFullLeaderboard() {
     }
     listEl.innerHTML = "";
     data.forEach((row, i) => listEl.appendChild(lbRowEl(row, i)));
-    listEl.scrollTop = 0; // always start a fresh list at rank 1 (e.g. after a tab switch)
-    // Scroll the player's own row into view so they can find themselves in a long list.
-    const me = listEl.querySelector(".lb-row.me");
-    if (me) {
-      const meRect = me.getBoundingClientRect();
-      const listRect = listEl.getBoundingClientRect();
-      listEl.scrollTop += (meRect.top - listRect.top) - listEl.clientHeight / 2 + me.clientHeight / 2;
-    }
+    listEl.scrollTop = 0; // start at rank 1; the pinned "You" row tracks the player from the bottom
+    updateStickyMine(listEl, data);
   } catch (e) {
     listEl.innerHTML = `<li class="lb-empty">Couldn't load leaderboard.</li>`;
   }
@@ -790,8 +848,10 @@ document.querySelectorAll(".lbm-tabs .lb-tab").forEach(tab => {
     renderFullLeaderboard();
   });
 });
-document.getElementById("lb-modal-close").addEventListener("click", () =>
-  closeModal(document.getElementById("lb-modal")));
+document.getElementById("lb-modal-close").addEventListener("click", () => {
+  clearStickyMine();
+  closeModal(document.getElementById("lb-modal"));
+});
 
 // ---------- Game Screen ----------
 function stageEmojiFor(typeKey, level) {

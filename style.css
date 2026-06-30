@@ -878,12 +878,42 @@ body.night .lb-view-more { color: #C4B5FD; border-color: var(--night-border); }
   max-height: 60vh;
   overflow-y: auto;
   position: relative;
-  margin: 4px 0 16px;
+  margin: 4px 0 0;
   -webkit-overflow-scrolling: touch;
 }
 body.night .lb-modal-content .lb-tab { background: #f7f7f2; color: #888; border-color: #e5e5e5; }
 body.night .lb-modal-content .lb-tab.active { background: var(--success); color: #fff; border-color: var(--success); }
 body.night .lb-modal-content .lb-row { border-bottom-color: var(--line); }
+#lb-modal-close { margin-top: 14px; }
+
+/* Sticky-anchor "You" row pinned at the bottom of the full-list modal.
+   The gold top-line (certificate accent) sets it apart as intentional. */
+.lb-mine {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1.5px solid #D4AF37;
+}
+.lb-mine .lb-row { border-bottom: none; cursor: pointer; }
+.lb-mine .lb-name::after {
+  content: "You";
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #9A7B0A;
+  background: rgba(212, 175, 55, 0.16);
+  border: 1px solid rgba(212, 175, 55, 0.55);
+  padding: 1px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+/* Brief gold flash on the real row when you tap the pinned anchor to find it. */
+@keyframes lbFlash {
+  0%   { background: rgba(212, 175, 55, 0.5); }
+  100% { background: var(--success-soft); }
+}
+.lb-row.me.lb-flash { animation: lbFlash 1.5s ease-out; }
 
 /* ---------- Toast ---------- */
 .toast {
