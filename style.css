@@ -854,6 +854,37 @@ body.night .lb-row { border-bottom-color: #3a4068; }
 .lb-strength { font-weight: 700; color: var(--accent); font-size: 14px; }
 .lb-empty, .lb-loading { text-align: center; color: #999; font-size: 13px; padding: 16px 0; }
 
+/* "View full list" trigger on the card */
+.lb-view-more {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: none;
+  color: var(--brand-ink);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+}
+.lb-view-more:active { transform: scale(0.98); }
+body.night .lb-view-more { color: #C4B5FD; border-color: var(--night-border); }
+
+/* Full-list modal: scope tabs/rows back to the light look since the modal
+   card is always white, even in the night theme. */
+.lb-modal-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  position: relative;
+  margin: 4px 0 16px;
+  -webkit-overflow-scrolling: touch;
+}
+body.night .lb-modal-content .lb-tab { background: #f7f7f2; color: #888; border-color: #e5e5e5; }
+body.night .lb-modal-content .lb-tab.active { background: var(--success); color: #fff; border-color: var(--success); }
+body.night .lb-modal-content .lb-row { border-bottom-color: var(--line); }
+
 /* ---------- Toast ---------- */
 .toast {
   position: fixed;

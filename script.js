@@ -673,12 +673,34 @@ async function syncToCloud() {
 // ---------- Leaderboard ----------
 let lbScope = "gl";
 
+const CARD_LB_LIMIT = 25;   // rows shown on the dashboard card
+const FULL_LB_LIMIT = 500;  // rows shown in the "View full list" modal
+
+// Build one leaderboard <li>. Shared by the dashboard card and the full-list
+// modal so ranks, medals, emoji and the "me" highlight stay identical.
+function lbRowEl(row, i) {
+  const li = document.createElement("li");
+  const isMe = row.pet_name === state.petName;
+  li.className = "lb-row" + (isMe ? " me" : "");
+  const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
+  const emoji = stageEmojiFor(row.pet_type, row.level);
+  li.innerHTML = `
+    <span class="lb-rank">${medal}</span>
+    <span class="lb-emoji">${emoji}</span>
+    <span class="lb-name">${escapeHtml(row.pet_name)}<span class="lb-lv">Lv ${row.level}</span></span>
+    <span class="lb-strength">${strengthDisplay(row.strength)} 💪</span>
+  `;
+  return li;
+}
+
 async function renderLeaderboard() {
   // Keep the tab highlight in sync with the active scope.
   document.querySelectorAll(".lb-tab").forEach(t =>
     t.classList.toggle("active", t.dataset.scope === lbScope));
 
   const listEl = document.getElementById("lb-list");
+  const moreBtn = document.getElementById("lb-view-more");
+  moreBtn.classList.add("hidden");
   if (!sb) {
     listEl.innerHTML = `<li class="lb-empty">Leaderboard is offline right now.</li>`;
     return;
@@ -691,7 +713,7 @@ async function renderLeaderboard() {
       .select("pet_name,pet_type,strength,level,is_great_lakes")
       .order("strength", { ascending: false })
       .order("level", { ascending: false })
-      .limit(25);
+      .limit(CARD_LB_LIMIT);
     if (lbScope === "gl") q = q.eq("is_great_lakes", true);
     const { data, error } = await q;
     if (error) { listEl.innerHTML = `<li class="lb-empty">Couldn't load leaderboard.</li>`; return; }
@@ -700,32 +722,76 @@ async function renderLeaderboard() {
       return;
     }
     listEl.innerHTML = "";
-    data.forEach((row, i) => {
-      const li = document.createElement("li");
-      const isMe = row.pet_name === state.petName;
-      li.className = "lb-row" + (isMe ? " me" : "");
-      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
-      const emoji = stageEmojiFor(row.pet_type, row.level);
-      li.innerHTML = `
-        <span class="lb-rank">${medal}</span>
-        <span class="lb-emoji">${emoji}</span>
-        <span class="lb-name">${escapeHtml(row.pet_name)}<span class="lb-lv">Lv ${row.level}</span></span>
-        <span class="lb-strength">${strengthDisplay(row.strength)} 💪</span>
-      `;
-      listEl.appendChild(li);
-    });
+    data.forEach((row, i) => listEl.appendChild(lbRowEl(row, i)));
+    // Card is full — there may be more players past the cut, so offer the full list.
+    if (data.length >= CARD_LB_LIMIT) moreBtn.classList.remove("hidden");
   } catch (e) {
     listEl.innerHTML = `<li class="lb-empty">Couldn't load leaderboard.</li>`;
   }
 }
 
-document.querySelectorAll(".lb-tab").forEach(tab => {
+// Card tabs carry data-scope; modal tabs carry data-mscope (wired separately
+// below) — scope this selector so we don't double-bind the modal's tabs.
+document.querySelectorAll(".lb-tab[data-scope]").forEach(tab => {
   tab.addEventListener("click", () => {
     lbScope = tab.dataset.scope;
     renderLeaderboard();
   });
 });
 document.getElementById("lb-refresh").addEventListener("click", renderLeaderboard);
+
+// ---------- Full leaderboard modal ----------
+let lbModalScope = "gl";
+
+async function renderFullLeaderboard() {
+  document.querySelectorAll(".lbm-tabs .lb-tab").forEach(t =>
+    t.classList.toggle("active", t.dataset.mscope === lbModalScope));
+  const listEl = document.getElementById("lb-modal-list");
+  if (!sb) { listEl.innerHTML = `<li class="lb-empty">Leaderboard is offline right now.</li>`; return; }
+  const hasRows = listEl.querySelector(".lb-row");
+  if (!hasRows) listEl.innerHTML = `<li class="lb-loading">Loading…</li>`;
+  try {
+    let q = sb.from("pets")
+      .select("pet_name,pet_type,strength,level,is_great_lakes")
+      .order("strength", { ascending: false })
+      .order("level", { ascending: false })
+      .limit(FULL_LB_LIMIT);
+    if (lbModalScope === "gl") q = q.eq("is_great_lakes", true);
+    const { data, error } = await q;
+    if (error) { listEl.innerHTML = `<li class="lb-empty">Couldn't load leaderboard.</li>`; return; }
+    if (!data || data.length === 0) {
+      listEl.innerHTML = `<li class="lb-empty">No pets here yet — be the first to grow! 🌱</li>`;
+      return;
+    }
+    listEl.innerHTML = "";
+    data.forEach((row, i) => listEl.appendChild(lbRowEl(row, i)));
+    listEl.scrollTop = 0; // always start a fresh list at rank 1 (e.g. after a tab switch)
+    // Scroll the player's own row into view so they can find themselves in a long list.
+    const me = listEl.querySelector(".lb-row.me");
+    if (me) {
+      const meRect = me.getBoundingClientRect();
+      const listRect = listEl.getBoundingClientRect();
+      listEl.scrollTop += (meRect.top - listRect.top) - listEl.clientHeight / 2 + me.clientHeight / 2;
+    }
+  } catch (e) {
+    listEl.innerHTML = `<li class="lb-empty">Couldn't load leaderboard.</li>`;
+  }
+}
+
+document.getElementById("lb-view-more").addEventListener("click", () => {
+  lbModalScope = lbScope; // open on whichever tab the card is currently showing
+  openModal(document.getElementById("lb-modal"));
+  renderFullLeaderboard();
+});
+document.querySelectorAll(".lbm-tabs .lb-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    lbModalScope = tab.dataset.mscope;
+    document.getElementById("lb-modal-list").innerHTML = ""; // reset so "Loading…" shows for the new scope
+    renderFullLeaderboard();
+  });
+});
+document.getElementById("lb-modal-close").addEventListener("click", () =>
+  closeModal(document.getElementById("lb-modal")));
 
 // ---------- Game Screen ----------
 function stageEmojiFor(typeKey, level) {

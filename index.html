@@ -106,6 +106,7 @@
         <button class="lb-tab" data-scope="all">🌍 Everyone</button>
       </div>
       <ol id="lb-list" class="lb-list"></ol>
+      <button id="lb-view-more" class="lb-view-more hidden">View full list →</button>
     </div>
 
     <button id="secure-pin-btn" class="secure-pin-btn hidden">🔒 Set a recovery PIN</button>
@@ -253,6 +254,19 @@
     </div>
     <div id="cert-gl-badge" class="cert-gl-badge hidden">Great Lakes Rank: #<span id="cert-gl-rank"></span></div>
     <div class="cert-footer">habit-pet-two.vercel.app</div>
+  </div>
+
+  <!-- MODAL: Full leaderboard -->
+  <div id="lb-modal" class="modal hidden">
+    <div class="modal-content lb-modal-content">
+      <h2>Leaderboard</h2>
+      <div class="lb-tabs lbm-tabs">
+        <button class="lb-tab active" data-mscope="gl">🎓 Great Lakes</button>
+        <button class="lb-tab" data-mscope="all">🌍 Everyone</button>
+      </div>
+      <ol id="lb-modal-list" class="lb-list lb-modal-list"></ol>
+      <button id="lb-modal-close" class="primary-btn">Close</button>
+    </div>
   </div>
 
   <!-- TOAST -->
