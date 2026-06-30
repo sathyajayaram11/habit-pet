@@ -874,6 +874,27 @@ body.night .lb-view-more { color: #C4B5FD; border-color: var(--night-border); }
 
 /* Full-list modal: scope tabs/rows back to the light look since the modal
    card is always white, even in the night theme. */
+.lb-modal-content { position: relative; }
+.modal-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  color: var(--ink-faint);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.modal-x:hover, .modal-x:active { background: #f1f1f1; color: var(--ink); }
+
 .lb-modal-list {
   max-height: 60vh;
   overflow-y: auto;

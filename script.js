@@ -324,6 +324,9 @@ function openModal(modal) {
 function closeModal(modal) {
   modal.classList.add("hidden");
   resetModalViewport(modal);
+  // Tear down the leaderboard's sticky-anchor observer no matter how it closed
+  // (X, Close button, backdrop click, or Escape).
+  if (modal.id === "lb-modal") clearStickyMine();
 }
 // Click on backdrop (not the content box) closes the modal.
 document.querySelectorAll(".modal").forEach(modal => {
@@ -848,10 +851,9 @@ document.querySelectorAll(".lbm-tabs .lb-tab").forEach(tab => {
     renderFullLeaderboard();
   });
 });
-document.getElementById("lb-modal-close").addEventListener("click", () => {
-  clearStickyMine();
-  closeModal(document.getElementById("lb-modal"));
-});
+[ "lb-modal-close", "lb-modal-x" ].forEach(id =>
+  document.getElementById(id).addEventListener("click", () =>
+    closeModal(document.getElementById("lb-modal"))));
 
 // ---------- Game Screen ----------
 function stageEmojiFor(typeKey, level) {
