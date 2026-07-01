@@ -111,19 +111,41 @@ const QUOTES = [
   { text: "Fall seven times, stand up eight.", author: "Japanese Proverb" },
   { text: "It is impossible to live without failing at something, unless you live so cautiously that you might as well not have lived at all.", author: "J.K. Rowling" },
   { text: "It is hard to fail, but it is worse never to have tried to succeed.", author: "Theodore Roosevelt" },
+  // Indian voices — thinkers, scientists, leaders, athletes and entrepreneurs.
+  { text: "Dream is not that which you see while sleeping, it is something that does not let you sleep.", author: "A.P.J. Abdul Kalam" },
+  { text: "Failure will never overtake me if my determination to succeed is strong enough.", author: "A.P.J. Abdul Kalam" },
+  { text: "Arise, awake, and stop not till the goal is reached.", author: "Swami Vivekananda" },
+  { text: "Take up one idea. Make that one idea your life; dream of it, live on it. This is the way to success.", author: "Swami Vivekananda" },
+  { text: "The future depends on what you do today.", author: "Mahatma Gandhi" },
+  { text: "Strength does not come from physical capacity. It comes from an indomitable will.", author: "Mahatma Gandhi" },
+  { text: "You can't cross the sea merely by standing and staring at the water.", author: "Rabindranath Tagore" },
+  { text: "Faith is the bird that feels the light when the dawn is still dark.", author: "Rabindranath Tagore" },
+  { text: "You have the right to work, but never to the fruit of the work.", author: "The Bhagavad Gita" },
+  { text: "Once you start working on something, don't be afraid of failure and don't abandon it. People who work sincerely are the happiest.", author: "Chanakya" },
+  { text: "I don't believe in taking right decisions. I take decisions and then make them right.", author: "Ratan Tata" },
+  { text: "Think big, think fast, think ahead. Ideas are no one's monopoly.", author: "Dhirubhai Ambani" },
+  { text: "If people are not laughing at your goals, your goals are too small.", author: "Azim Premji" },
+  { text: "There are two kinds of people: those who do the work and those who take the credit. Try to be in the first group; there is less competition there.", author: "Indira Gandhi" },
+  { text: "The path from dreams to success does exist. May you have the vision to find it, and the perseverance to follow it.", author: "Kalpana Chawla" },
+  { text: "People throw stones at you and you convert them into milestones.", author: "Sachin Tendulkar" },
+  { text: "Self-belief and hard work will always earn you success.", author: "Virat Kohli" },
+  { text: "Entrepreneurship is about being able to face failure, manage failure, and succeed after failing.", author: "Kiran Mazumdar-Shaw" },
 ];
 
-// Same quote all day for everyone, changing daily — a quiet daily ritual to
-// match the habit-checking one. Picked by hashing the IST date string.
-function quoteForToday() {
-  const key = todayKey();
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
-  return QUOTES[hash % QUOTES.length];
+// A fresh quote every 3 hours (8 slots a day), the same for everyone at any given
+// moment. The slot number advances in order, so the quote always changes at each
+// boundary and cycles through the whole list — a shared ritual that refreshes
+// through the day, not just at midnight. renderQuote() re-runs on the 60s tick,
+// so an open app picks up the new quote within a minute of each boundary.
+function currentQuote() {
+  const n = istNow();
+  const dayNumber = Math.floor(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) / 86400000);
+  const slot = dayNumber * 8 + Math.floor(n.getHours() / 3);
+  return QUOTES[((slot % QUOTES.length) + QUOTES.length) % QUOTES.length];
 }
 
 function renderQuote() {
-  const q = quoteForToday();
+  const q = currentQuote();
   document.getElementById("quote-text").textContent = q.text;
   document.getElementById("quote-author").textContent = `— ${q.author}`;
 }
